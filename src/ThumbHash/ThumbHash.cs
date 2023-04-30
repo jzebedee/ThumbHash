@@ -402,11 +402,8 @@ public static class ThumbHash
 
     /// <summary>
     /// Extracts the average color from a ThumbHash.
-    /// <para>
-    /// Returns the RGBA values where each value ranges from 0 to 1. RGB is not be
-    /// premultiplied by A.
-    /// </para>
     /// </summary>
+    /// <returns>Unpremultiplied RGBA values where each value ranges from 0 to 1. </returns>
     /// <exception cref="NotImplementedException">Thrown if the input is too short.</exception>
     public static (float r, float g, float b, float a) ThumbHashToAverageRgba(ReadOnlySpan<byte> hash)
     {
