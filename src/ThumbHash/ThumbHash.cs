@@ -273,11 +273,11 @@ public static class ThumbHash
                 // Precompute the coefficients
                 for (int cx = 0; cx < Math.Max(lx, has_alpha ? 5 : 3); cx++)
                 {
-                    fx[cx] = MathF.Cos(MathF.PI / (float)w * ((float)x + 0.5f) * (float)cx);
+                    fx[cx] = MathF.Cos(MathF.PI / w * (x + 0.5f) * cx);
                 }
                 for (int cy = 0; cy < Math.Max(ly, has_alpha ? 5 : 3); cy++)
                 {
-                    fy[cy] = MathF.Cos(MathF.PI / (float)h * ((float)y + 0.5f) * (float)cy);
+                    fy[cy] = MathF.Cos(MathF.PI / h * (y + 0.5f) * cy);
                 }
 
                 // Decode L
