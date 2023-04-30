@@ -122,7 +122,7 @@ public static class ThumbHash
                             f += channel[x + y * w] * fx[x] * fy;
                         }
                     }
-                    f /= (float)(w * h);
+                    f /= w * h;
                     if (cx > 0 || cy > 0)
                     {
                         ac[n++] = f;
@@ -223,22 +223,22 @@ public static class ThumbHash
         var ratio = ThumbHashToApproximateAspectRatio(hash);
 
         // Read the constants
-        var header24 = (uint)hash[0]
+        var header24 = hash[0]
             | (((uint)hash[1]) << 8)
             | (((uint)hash[2]) << 16);
-        var header16 = (ushort)hash[3] | (((ushort)hash[4]) << 8);
-        var l_dc = (float)(header24 & 63) / 63.0f;
-        var p_dc = (float)((header24 >> 6) & 63) / 31.5f - 1.0f;
-        var q_dc = (float)((header24 >> 12) & 63) / 31.5f - 1.0f;
-        var l_scale = (float)((header24 >> 18) & 31) / 31.0f;
+        var header16 = hash[3] | (hash[4] << 8);
+        var l_dc = (header24 & 63) / 63.0f;
+        var p_dc = ((header24 >> 6) & 63) / 31.5f - 1.0f;
+        var q_dc = ((header24 >> 12) & 63) / 31.5f - 1.0f;
+        var l_scale = ((header24 >> 18) & 31) / 31.0f;
         var has_alpha = (header24 >> 23) != 0;
-        var p_scale = (float)((header16 >> 3) & 63) / 63.0f;
-        var q_scale = (float)((header16 >> 9) & 63) / 63.0f;
+        var p_scale = ((header16 >> 3) & 63) / 63.0f;
+        var q_scale = ((header16 >> 9) & 63) / 63.0f;
         var is_landscape = (header16 >> 15) != 0;
         var l_max = has_alpha ? 5 : 7;
         var lx = Math.Max(3, is_landscape ? l_max : header16 & 7);
         var ly = Math.Max(3, is_landscape ? header16 & 7 : l_max);
-        var (a_dc, a_scale) = has_alpha ? ((float)(hash[5] & 15) / 15.0f, (float)(hash[5] >> 4) / 15.0f) : (1.0f, 1.0f);
+        var (a_dc, a_scale) = has_alpha ? ((hash[5] & 15) / 15.0f, (hash[5] >> 4) / 15.0f) : (1.0f, 1.0f);
 
         // Read the varying factors (boost saturation by 1.25x to compensate for quantization)
         static float[] decode_channel(ReadOnlySpan<byte> hash, int start, ref int index, int nx, int ny, float scale)
