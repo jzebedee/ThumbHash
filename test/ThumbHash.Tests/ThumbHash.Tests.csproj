@@ -15,6 +15,9 @@
     <Content Include="..\..\assets\flower_thumbhash_rust.png" Link="Resources\flower_thumbhash_rust.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="..\..\assets\tux.png" Link="Resources\tux.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
