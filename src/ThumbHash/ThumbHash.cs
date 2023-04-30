@@ -40,7 +40,6 @@ public static class ThumbHash
         var avg_b = 0.0f;
         var avg_a = 0.0f;
 
-        {
             for (int i = 0; i < rgba.Length; i += 4)
             {
                 var alpha = rgba[i + 3] / 255.0f;
@@ -49,7 +48,6 @@ public static class ThumbHash
                 avg_b += alpha / 255.0f * rgba[i + 2];
                 avg_a += alpha;
             }
-        }
 
         if (avg_a > 0.0f)
         {
@@ -62,8 +60,7 @@ public static class ThumbHash
         var l_limit = has_alpha ? 5 : 7; // Use fewer luminance bits if there's alpha
         var lx = Math.Max((int)MathF.Round(l_limit * w / MathF.Max(w, h)), 1);
         var ly = Math.Max((int)MathF.Round(l_limit * h / MathF.Max(w, h)), 1);
-        Span<float>
-            lpqa = new float[w * h * 4],
+        Span<float> lpqa = new float[w * h * 4],
             // l: luminance
             l = lpqa[0..(w * h)],
             // p: yellow - blue
@@ -137,7 +134,7 @@ public static class ThumbHash
             }
             if (scale > 0.0f)
             {
-                foreach(ref var aci in ac.AsSpan())
+                foreach (ref var aci in ac.AsSpan())
                 {
                     aci = 0.5f + 0.5f / scale * aci;
                 }
@@ -247,7 +244,7 @@ public static class ThumbHash
             int n = 0;
             for (int cy = 0; cy < ny; cy++)
             {
-                for(int cx = cy > 0 ? 0 : 1; cx * ny < nx * (ny - cy); cx++, n++, index++)
+                for (int cx = cy > 0 ? 0 : 1; cx * ny < nx * (ny - cy); cx++, n++, index++)
                 {
                     var data = hash[start + (index >> 1)] >> ((index & 1) << 2);
                     ac[n] = ((data & 15) / 7.5f - 1.0f) * scale;
