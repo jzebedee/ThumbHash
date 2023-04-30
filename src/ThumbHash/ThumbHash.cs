@@ -419,12 +419,12 @@ public static class ThumbHash
         }
 #endif
 
-        var header = (uint)hash[0] | ((uint)hash[1] << 8) | ((uint)hash[2] << 16);
-        var l = (float)(header & 63) / 63.0f;
-        var p = (float)((header >> 6) & 63) / 31.5f - 1.0f;
-        var q = (float)((header >> 12) & 63) / 31.5f - 1.0f;
+        var header = hash[0] | ((uint)hash[1] << 8) | ((uint)hash[2] << 16);
+        var l = (header & 63) / 63.0f;
+        var p = ((header >> 6) & 63) / 31.5f - 1.0f;
+        var q = ((header >> 12) & 63) / 31.5f - 1.0f;
         var has_alpha = (header >> 23) != 0;
-        var a = has_alpha ? (float)(hash[5] & 15) / 15.0f : 1.0f;
+        var a = has_alpha ? (hash[5] & 15) / 15.0f : 1.0f;
         var b = l - 2.0f / 3.0f * p;
         var r = (3.0f * l - b + q) / 2.0f;
         var g = r - q;
