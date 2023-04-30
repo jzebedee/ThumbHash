@@ -19,6 +19,15 @@ public class ThumbHashTests
 
     private static (float r, float g, float b, float a) FlowerThumbhashAverages => (r: 0.484127015f, g: 0.341269821f, b: 0.0793650597f, a: 1f);
 
+    private static SKBitmap FlowerThumbhashRendered
+    {
+        get
+        {
+            using var skbmp = SKBitmap.Decode("Resources/flower_thumbhash_rust.png");
+            return skbmp.Copy(SKColorType.Rgba8888);
+        }
+    }
+
     private const float FlowerRatio = 0.714285731f;
 
     //private static unsafe void SaveImage(Stream output, int w, int h, ReadOnlySpan<byte> pixels)
@@ -61,6 +70,12 @@ public class ThumbHashTests
     public void ThumbHashToRgba()
     {
         var (w, h, hash_rgba) = ThumbHash.ThumbHashToRgba(FlowerThumbHash);
+        using var hash_img = FromPixels(w, h, hash_rgba);
+        using var hash_bmp = SKBitmap.FromImage(hash_img);
+
+        using var expected_hash_img = FlowerThumbhashRendered;
+
+        Assert.Equal(expected_hash_img.Pixels, hash_bmp.Pixels);
     }
 
     [Fact]
