@@ -9,9 +9,9 @@ public static class ThumbHash
 
     public static byte[] RgbaToThumbHash(int width, int height, ReadOnlySpan<byte> rgba)
     {
-        var hash = new byte[HashSize];
+        Span<byte> hash = stackalloc byte[HashSize];
         var bytesWritten = RgbaToThumbHash(hash, width, height, rgba);
-        return hash[..bytesWritten];
+        return hash[..bytesWritten].ToArray();
     }
 
     public static int RgbaToThumbHash(Span<byte> hash, int w, int h, ReadOnlySpan<byte> rgba)
