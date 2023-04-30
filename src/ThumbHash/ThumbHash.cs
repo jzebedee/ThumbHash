@@ -400,7 +400,40 @@ public static class ThumbHash
         return (w, h, rgba_array);
     }
 
-    public static void ThumbHashToAverageRba() => throw new NotImplementedException();
+    /// <summary>
+    /// Extracts the average color from a ThumbHash.
+    /// <para>
+    /// Returns the RGBA values where each value ranges from 0 to 1. RGB is not be
+    /// premultiplied by A.
+    /// </para>
+    /// </summary>
+    /// <exception cref="NotImplementedException">Thrown if the input is too short.</exception>
+    public static (float r, float g, float b, float a) ThumbHashToAverageRgba(ReadOnlySpan<byte> hash)
+    {
+#if NET8_0_OR_GREATER
+        ArgumentOutOfRangeException.ThrowIfLessThan(hash.Length, MinHash);
+#else
+        if (hash.Length < MinHash)
+        {
+            ThrowIfLessThan(hash.Length, MinHash);
+        }
+#endif
+
+        var header = (uint)hash[0] | ((uint)hash[1] << 8) | ((uint)hash[2] << 16);
+        var l = (float)(header & 63) / 63.0f;
+        var p = (float)((header >> 6) & 63) / 31.5f - 1.0f;
+        var q = (float)((header >> 12) & 63) / 31.5f - 1.0f;
+        var has_alpha = (header >> 23) != 0;
+        var a = has_alpha ? (float)(hash[5] & 15) / 15.0f : 1.0f;
+        var b = l - 2.0f / 3.0f * p;
+        var r = (3.0f * l - b + q) / 2.0f;
+        var g = r - q;
+
+        return (r: Math.Clamp(r, 0.0f, 1.0f),
+                g: Math.Clamp(g, 0.0f, 1.0f),
+                b: Math.Clamp(b, 0.0f, 1.0f),
+                a);
+    }
 
     /// <summary>
     /// Extracts the approximate aspect ratio of the original image.
