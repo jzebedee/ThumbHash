@@ -86,14 +86,14 @@ public static class ThumbHash
         var avg_b = 0.0f;
         var avg_a = 0.0f;
 
-            for (int i = 0; i < rgba.Length; i += 4)
-            {
-                var alpha = rgba[i + 3] / 255.0f;
-                avg_r += alpha / 255.0f * rgba[i + 0];
-                avg_g += alpha / 255.0f * rgba[i + 1];
-                avg_b += alpha / 255.0f * rgba[i + 2];
-                avg_a += alpha;
-            }
+        for (int i = 0; i < rgba.Length; i += 4)
+        {
+            var alpha = rgba[i + 3] / 255.0f;
+            avg_r += alpha / 255.0f * rgba[i + 0];
+            avg_g += alpha / 255.0f * rgba[i + 1];
+            avg_b += alpha / 255.0f * rgba[i + 2];
+            avg_a += alpha;
+        }
 
         if (avg_a > 0.0f)
         {
@@ -248,7 +248,7 @@ public static class ThumbHash
         }
 
         return hi;
-        }
+    }
 
     /// <summary>
     /// Decodes a ThumbHash to an RGBA image.
@@ -310,7 +310,6 @@ public static class ThumbHash
         fx.Clear();
         fy.Clear();
 
-        Span<byte> rgba = rgba_array;
         for (int y = 0, i = 0; y < h; y++)
         {
             for (int x = 0; x < w; x++, i += 4)
@@ -379,21 +378,11 @@ public static class ThumbHash
                 var r = (3.0f * l - b + q) / 2.0f;
                 var g = r - q;
 
-                //rgba.extend_from_slice(&[
-                //    (r.clamp(0.0, 1.0) * 255.0) as u8,
-                //    (g.clamp(0.0, 1.0) * 255.0) as u8,
-                //    (b.clamp(0.0, 1.0) * 255.0) as u8,
-                //    (a.clamp(0.0, 1.0) * 255.0) as u8,
-                //]);
-
-                rgba[i] = (byte)(Math.Clamp(r, 0.0f, 1.0f) * 255.0f);
-                rgba[i+1] = (byte)(Math.Clamp(g, 0.0f, 1.0f) * 255.0f);
-                rgba[i+2] = (byte)(Math.Clamp(b, 0.0f, 1.0f) * 255.0f);
-                rgba[i+3] = (byte)(Math.Clamp(a, 0.0f, 1.0f) * 255.0f);
-                //rgba[i] = (byte)Math.max(0, Math.round(255.0f * Math.min(1, r)));
-                //rgba[i + 1] = (byte)Math.max(0, Math.round(255.0f * Math.min(1, g)));
-                //rgba[i + 2] = (byte)Math.max(0, Math.round(255.0f * Math.min(1, b)));
-                //rgba[i + 3] = (byte)Math.max(0, Math.round(255.0f * Math.min(1, a)));
+                Span<byte> rgba = rgba_array.AsSpan(i, 4);
+                rgba[0] = (byte)(Math.Clamp(r, 0.0f, 1.0f) * 255.0f);
+                rgba[1] = (byte)(Math.Clamp(g, 0.0f, 1.0f) * 255.0f);
+                rgba[2] = (byte)(Math.Clamp(b, 0.0f, 1.0f) * 255.0f);
+                rgba[3] = (byte)(Math.Clamp(a, 0.0f, 1.0f) * 255.0f);
             }
         }
 
