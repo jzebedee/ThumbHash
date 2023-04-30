@@ -14,6 +14,14 @@ public static class ThumbHash
         return hash[..bytesWritten].ToArray();
     }
 
+    /// <summary>
+    /// Encodes an RGBA image to a ThumbHash.
+    /// </summary>
+    /// <param name="hash"></param>
+    /// <param name="w">The width of the input image. Must be ≤100px.</param>
+    /// <param name="h">The height of the input image. Must be ≤100px.</param>
+    /// <param name="rgba">The pixels in the input image, row-by-row. RGB should not be premultiplied by A. Must have `w*h*4` elements.</param>
+    /// <returns>Number of bytes written into hash span</returns>
     public static int RgbaToThumbHash(Span<byte> hash, int w, int h, ReadOnlySpan<byte> rgba)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(hash.Length, HashSize);
@@ -205,6 +213,11 @@ public static class ThumbHash
         }
     }
 
+    /// <summary>
+    /// Decodes a ThumbHash to an RGBA image.
+    /// </summary>
+    /// <returns>Width, height, and unpremultiplied RGBA8 pixels of the rendered ThumbHash.</returns>
+    /// <exception cref="System.ArgumentOutOfRangeException">Thrown if the input is too short.</exception>
     public static (int w, int h, byte[] rgba) ThumbHashToRgba(ReadOnlySpan<byte> hash)
     {
         var ratio = ThumbHashToApproximateAspectRatio(hash);
