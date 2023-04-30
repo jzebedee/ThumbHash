@@ -5,11 +5,37 @@ namespace ThumbHash;
 
 public static class ThumbHash
 {
-    private const int HashSize = 25;
+    private const int MaxHash = 25;
+    private const int MinHash = 5;
+
+    private const int MaxWidth = 100;
+    private const int MaxHeight = 100;
+
+    #region ThrowHelpers
+#if !NET8_0_OR_GREATER
+    [DoesNotReturn]
+    static void ThrowIfLessThan<T>(T value, T other, [CallerArgumentExpression(nameof(value))] string? paramName = null)
+    {
+        throw new ArgumentOutOfRangeException(paramName, value, $"'{value}' must be greater than or equal to '{other}'.");
+    }
+
+    [DoesNotReturn]
+    static void ThrowIfGreaterThan<T>(T value, T other, [CallerArgumentExpression(nameof(value))] string? paramName = null)
+    {
+        throw new ArgumentOutOfRangeException(paramName, value, $"'{paramName}' must be less than or equal to '{other}'.");
+    }
+#endif
+
+    [DoesNotReturn]
+    static void ThrowNotEqual<T>(T value, T other, [CallerArgumentExpression(nameof(value))] string? paramName = null, [CallerArgumentExpression(nameof(other))] string? otherName = null)
+    {
+        throw new ArgumentOutOfRangeException(paramName, value, $"'{paramName}' must be equal to '{other}' ('{otherName}').");
+    }
+    #endregion
 
     public static byte[] RgbaToThumbHash(int width, int height, ReadOnlySpan<byte> rgba)
     {
-        Span<byte> hash = stackalloc byte[HashSize];
+        Span<byte> hash = stackalloc byte[MaxHash];
         var bytesWritten = RgbaToThumbHash(hash, width, height, rgba);
         return hash[..bytesWritten].ToArray();
     }
@@ -24,11 +50,31 @@ public static class ThumbHash
     /// <returns>Number of bytes written into hash span</returns>
     public static int RgbaToThumbHash(Span<byte> hash, int w, int h, ReadOnlySpan<byte> rgba)
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(hash.Length, HashSize);
+#if NET8_0_OR_GREATER
+        ArgumentOutOfRangeException.ThrowIfLessThan(hash.Length, MinHash);
+#else
+        if (hash.Length < MinHash)
+        {
+            ThrowIfLessThan(hash.Length, MinHash);
+        }
+#endif
 
         // Encoding an image larger than 100x100 is slow with no benefit
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(w, 100);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(h, 100);
+#if NET8_0_OR_GREATER
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(w, MaxWidth);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(h, MaxHeight);
+#else
+        if (w > MaxWidth)
+        {
+            ThrowIfGreaterThan(w, MaxWidth);
+        }
+
+        if (h > MaxHeight)
+        {
+            ThrowIfGreaterThan(h, MaxHeight);
+        }
+#endif
+
         if (rgba.Length != w * h * 4)
         {
             ThrowNotEqual(rgba.Length, w * h * 4);
@@ -202,13 +248,7 @@ public static class ThumbHash
         }
 
         return hi;
-
-        [DoesNotReturn]
-        static void ThrowNotEqual<T>(T value, T other, [CallerArgumentExpression(nameof(value))] string? paramName = null, [CallerArgumentExpression(nameof(other))] string? otherName = null)
-        {
-            throw new ArgumentOutOfRangeException(paramName, value, string.Format("'{0}' must be equal to '{1}' ('{2}').", paramName, other, otherName));
         }
-    }
 
     /// <summary>
     /// Decodes a ThumbHash to an RGBA image.
@@ -368,7 +408,14 @@ public static class ThumbHash
     /// <exception cref="System.ArgumentOutOfRangeException">Thrown if the input is too short.</exception>
     public static float ThumbHashToApproximateAspectRatio(ReadOnlySpan<byte> hash)
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(hash.Length, 5);
+#if NET8_0_OR_GREATER
+        ArgumentOutOfRangeException.ThrowIfLessThan(hash.Length, MinHash);
+#else
+        if (hash.Length < MinHash)
+        {
+            ThrowIfLessThan(hash.Length, MinHash);
+        }
+#endif
 
         var has_alpha = (hash[2] & 0x80) != 0;
         var l_max = has_alpha ? 5 : 7;
