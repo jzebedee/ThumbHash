@@ -15,6 +15,7 @@ jobs:
           7.0.x
     - name: Pack
       run: dotnet pack -c Release --output pkg
+    # Don't forget to go to Settings->Actions->General->Workflow permissions and select "Read and write permissions"
     - name: Publish the package to GPR
       run: dotnet nuget push pkg/*.nupkg -k ${{ secrets.GITHUB_TOKEN }} -s https://nuget.pkg.github.com/jzebedee/index.json --skip-duplicate
     - name: Publish the package to NuGet
