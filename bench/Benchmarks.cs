@@ -1,10 +1,13 @@
 ﻿using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Diagnosers;
 using SkiaSharp;
 using System.Collections.Generic;
 using System.IO;
 
 namespace ThumbHash.Benchmarks;
 
+[MemoryDiagnoser]
+[HardwareCounters(HardwareCounter.BranchInstructions, HardwareCounter.BranchMispredictions)]
 public class Benchmarks
 {
     private static SKBitmap GetBitmap(string path, bool fixPremul = false)
