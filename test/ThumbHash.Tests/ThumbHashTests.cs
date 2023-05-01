@@ -1,5 +1,4 @@
 using SkiaSharp;
-using System.Runtime.CompilerServices;
 
 namespace ThumbHash.Tests;
 

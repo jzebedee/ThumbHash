@@ -3,9 +3,20 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.6.33620.401
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThumbHash", "src\ThumbHash\ThumbHash.csproj", "{2DC8A1ED-AE1A-40FB-90B1-96CD06F2F460}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThumbHash", "src\ThumbHash\ThumbHash.csproj", "{2DC8A1ED-AE1A-40FB-90B1-96CD06F2F460}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThumbHash.Tests", "test\ThumbHash.Tests\ThumbHash.Tests.csproj", "{24771381-7EA1-445D-B58F-953EDF01333A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThumbHash.Tests", "test\ThumbHash.Tests\ThumbHash.Tests.csproj", "{24771381-7EA1-445D-B58F-953EDF01333A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{9922EF40-0CE9-4352-B8BE-1AE126FDCD30}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\ci.yml = .github\workflows\ci.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "info", "info", "{4EC7CE8C-18F0-478A-B5E7-A7E58A05576F}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE.txt = LICENSE.txt
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
