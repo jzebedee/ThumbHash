@@ -1,4 +1,5 @@
 using SkiaSharp;
+using System.Runtime.CompilerServices;
 
 namespace ThumbHash.Tests;
 
@@ -10,7 +11,7 @@ public class ThumbHashTests
 
     private static (float r, float g, float b, float a) FlowerThumbhashAverages => (r: 0.484127015f, g: 0.341269821f, b: 0.0793650597f, a: 1f);
 
-    private static SKBitmap FlowerThumbhashRendered => GetBitmap("Resources/flower_thumbhash_rust.png");
+    private static SKBitmap FlowerThumbHashRendered => GetBitmap("Resources/flower_thumbhash_rust.png");
 
     private const float FlowerRatio = 0.714285731f;
 
@@ -18,16 +19,7 @@ public class ThumbHashTests
 
     private static byte[] TuxThumbHash => Convert.FromHexString("A1 19 8A 1C 02 38 3A 25 D7 27 F6 8B 97 1F F7 F9 71 7F 80 37 67 58 98 79 06".Replace(" ", ""));
 
-    //private static unsafe void SaveImage(Stream output, int w, int h, ReadOnlySpan<byte> pixels)
-    //{
-    //    fixed (byte* ptr = pixels)
-    //    {
-    //        using var pixmap = new SKPixmap(new SKImageInfo(w, h, SKColorType.Rgba8888), (nint)ptr);
-    //        using var hash_img = SKImage.FromPixels(pixmap);
-    //        using var data = hash_img.Encode();
-    //        data.SaveTo(output);
-    //    }
-    //}
+    private static SKBitmap TuxThumbHashRendered => GetBitmap("Resources/tux_thumbhash_rust.png");
 
     private static SKBitmap GetBitmap(string path, bool fixPremul = false)
     {
@@ -38,15 +30,21 @@ public class ThumbHashTests
         return result;
     }
 
-    private static SKImage FromPixels(int w, int h, ReadOnlySpan<byte> pixels)
-        => SKImage.FromPixelCopy(new SKImageInfo(w, h, SKColorType.Rgba8888), pixels);
-
     public static IEnumerable<object[]> TestImages
     {
         get
         {
             yield return new object[] { FlowerBitmap, FlowerThumbHash };
             yield return new object[] { TuxBitmap, TuxThumbHash };
+        }
+    }
+
+    public static IEnumerable<object[]> TestThumbHashes
+    {
+        get
+        {
+            yield return new object[] { FlowerThumbHash, FlowerThumbHashRendered };
+            yield return new object[] { TuxThumbHash, TuxThumbHashRendered };
         }
     }
 
@@ -73,16 +71,32 @@ public class ThumbHashTests
         Assert.Throws<ArgumentOutOfRangeException>("rgba.Length", () => ThumbHash.RgbaToThumbHash(1, 1, stackalloc byte[5]));
     }
 
-    [Fact]
-    public void ThumbHashToRgba()
+    [Theory]
+    [MemberData(nameof(TestThumbHashes))]
+    public void ThumbHashToRgba(byte[] thumbhash, SKBitmap thumbhash_rendered)
     {
-        var (w, h, hash_rgba) = ThumbHash.ThumbHashToRgba(FlowerThumbHash);
-        using var hash_img = FromPixels(w, h, hash_rgba);
-        using var hash_bmp = SKBitmap.FromImage(hash_img);
+        var (w, h, hash_rgba) = ThumbHash.ThumbHashToRgba(thumbhash);
 
-        using var expected_hash_img = FlowerThumbhashRendered;
+        //some pixels are zeroed out in the png form so we round-trip this to make it match the expected png
+        using var hash_img = SKImage.FromPixelCopy(new(w, h, SKColorType.Rgba8888, SKAlphaType.Unpremul), hash_rgba);
+        using var hash_data_png = hash_img.Encode(SKEncodedImageFormat.Png, 100);
+        using var hash_bmp = SKBitmap.Decode(hash_data_png);
 
-        Assert.Equal(expected_hash_img.Pixels, hash_bmp.Pixels);
+        //
+        using var expected_hash_bmp = thumbhash_rendered;
+ 
+        //if(expected_hash_img.AlphaType is SKAlphaType.Unpremul)
+        //{
+        //    var th_rend_rgba = File.ReadAllBytes(@"examples\rust\tux_thumbhash.rgba");
+        //    hash_rgba.SequenceEqual(th_rend_rgba);
+        //}
+
+        //{
+        //    using var fs = File.Create("hash.png");
+        //    hash_data_png.SaveTo(fs);
+        //}
+
+        Assert.Equal(expected_hash_bmp.Pixels, hash_bmp.Pixels);
     }
 
     [Fact]
