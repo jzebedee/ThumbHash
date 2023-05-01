@@ -6,7 +6,7 @@ public class ThumbHashTests
 {
     private static SKBitmap FlowerBitmap => GetBitmap("Resources/flower.jpg");
 
-    private static byte[] FlowerThumbHash => new byte[] { 147, 74, 6, 45, 6, 146, 86, 195, 116, 5, 88, 103, 218, 138, 182, 103, 148, 144, 81, 7, 25 };
+    private static byte[] FlowerThumbHash => Convert.FromHexString("934A062D069256C374055867DA8AB6679490510719");
 
     private static (float r, float g, float b, float a) FlowerThumbHashAverages => (r: 0.484127015f, g: 0.341269821f, b: 0.0793650597f, a: 1f);
 
@@ -16,7 +16,7 @@ public class ThumbHashTests
 
     private static SKBitmap TuxBitmap => GetBitmap("Resources/tux.png", fixPremul: true);
 
-    private static byte[] TuxThumbHash => Convert.FromHexString("A1 19 8A 1C 02 38 3A 25 D7 27 F6 8B 97 1F F7 F9 71 7F 80 37 67 58 98 79 06".Replace(" ", ""));
+    private static byte[] TuxThumbHash => Convert.FromHexString("A1198A1C02383A25D727F68B971FF7F9717F80376758987906");
 
     private static (float r, float g, float b, float a) TuxThumbHashAverages => (r: 0.616402208f, g: 0.568783104f, b: 0.386243373f, a: 0.533333361f);
 
