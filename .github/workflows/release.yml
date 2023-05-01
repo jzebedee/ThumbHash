@@ -1,7 +1,7 @@
-name: Upload packages to feeds
+name: Publish packages to feeds
 on:
   release:
-    types: [created]
+    types: [published]
   workflow_dispatch:
 jobs:
   deploy:
