@@ -1,6 +1,7 @@
 # ThumbHash
 
 [![ThumbHash nuget package](https://img.shields.io/nuget/v/ThumbHash.svg?style=flat)](https://www.nuget.org/packages/ThumbHash)
+[![CI build-test-pack](https://github.com/jzebedee/ThumbHash/actions/workflows/ci.yml/badge.svg)](https://github.com/jzebedee/ThumbHash/actions/workflows/ci.yml)
 
 This library is a .NET implementation of [ThumbHash](https://github.com/evanw/thumbhash).
 
