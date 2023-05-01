@@ -9,7 +9,7 @@ public class ThumbHashTests
 
     private static byte[] FlowerThumbHash => new byte[] { 147, 74, 6, 45, 6, 146, 86, 195, 116, 5, 88, 103, 218, 138, 182, 103, 148, 144, 81, 7, 25 };
 
-    private static (float r, float g, float b, float a) FlowerThumbhashAverages => (r: 0.484127015f, g: 0.341269821f, b: 0.0793650597f, a: 1f);
+    private static (float r, float g, float b, float a) FlowerThumbHashAverages => (r: 0.484127015f, g: 0.341269821f, b: 0.0793650597f, a: 1f);
 
     private static SKBitmap FlowerThumbHashRendered => GetBitmap("Resources/flower_thumbhash_rust.png");
 
@@ -18,6 +18,8 @@ public class ThumbHashTests
     private static SKBitmap TuxBitmap => GetBitmap("Resources/tux.png", fixPremul: true);
 
     private static byte[] TuxThumbHash => Convert.FromHexString("A1 19 8A 1C 02 38 3A 25 D7 27 F6 8B 97 1F F7 F9 71 7F 80 37 67 58 98 79 06".Replace(" ", ""));
+
+    private static (float r, float g, float b, float a) TuxThumbHashAverages => (r: 0.616402208f, g: 0.568783104f, b: 0.386243373f, a: 0.533333361f);
 
     private static SKBitmap TuxThumbHashRendered => GetBitmap("Resources/tux_thumbhash_rust.png");
 
@@ -45,6 +47,15 @@ public class ThumbHashTests
         {
             yield return new object[] { FlowerThumbHash, FlowerThumbHashRendered };
             yield return new object[] { TuxThumbHash, TuxThumbHashRendered };
+        }
+    }
+
+    public static IEnumerable<object[]> TestThumbHashAverages
+    {
+        get
+        {
+            yield return new object[] { FlowerThumbHash, FlowerThumbHashAverages };
+            yield return new object[] { TuxThumbHash, TuxThumbHashAverages };
         }
     }
 
@@ -105,11 +116,12 @@ public class ThumbHashTests
         Assert.Throws<ArgumentOutOfRangeException>(() => ThumbHash.ThumbHashToRgba(stackalloc byte[4]));
     }
 
-    [Fact]
-    public void ThumbHashToAverageRgba()
+    [Theory]
+    [MemberData(nameof(TestThumbHashAverages))]
+    public void ThumbHashToAverageRgba(byte[] thumbhash, (float r, float g, float b, float a) averages)
     {
-        var expected = FlowerThumbhashAverages;
-        var actual = ThumbHash.ThumbHashToAverageRgba(FlowerThumbHash);
+        var expected = averages;
+        var actual = ThumbHash.ThumbHashToAverageRgba(thumbhash);
 
         Assert.Equal(expected, actual);
     }
