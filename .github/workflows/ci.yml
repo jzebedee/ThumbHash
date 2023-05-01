@@ -12,6 +12,8 @@ jobs:
           6.0.x
           7.0.x
           8.0.100-preview.3.23178.7
+    - name: Install dependencies
+      run: sudo apt-get install -y libfontconfig1
     - name: Restore
       run: dotnet restore
     - name: Build
