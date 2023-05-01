@@ -13,7 +13,7 @@ public class ThumbHashTests
 
     private static SKBitmap FlowerThumbHashRendered => GetBitmap("Resources/flower_thumbhash_rust.png");
 
-    private const float FlowerRatio = 0.714285731f;
+    private const float FlowerAspectRatio = 0.714285731f;
 
     private static SKBitmap TuxBitmap => GetBitmap("Resources/tux.png", fixPremul: true);
 
@@ -22,6 +22,8 @@ public class ThumbHashTests
     private static (float r, float g, float b, float a) TuxThumbHashAverages => (r: 0.616402208f, g: 0.568783104f, b: 0.386243373f, a: 0.533333361f);
 
     private static SKBitmap TuxThumbHashRendered => GetBitmap("Resources/tux_thumbhash_rust.png");
+
+    private const float TuxAspectRatio = 0.800000011f;
 
     private static SKBitmap GetBitmap(string path, bool fixPremul = false)
     {
@@ -56,6 +58,15 @@ public class ThumbHashTests
         {
             yield return new object[] { FlowerThumbHash, FlowerThumbHashAverages };
             yield return new object[] { TuxThumbHash, TuxThumbHashAverages };
+        }
+    }
+
+    public static IEnumerable<object[]> TestThumbHashRatios
+    {
+        get
+        {
+            yield return new object[] { FlowerThumbHash, FlowerAspectRatio };
+            yield return new object[] { TuxThumbHash, TuxAspectRatio };
         }
     }
 
@@ -132,10 +143,14 @@ public class ThumbHashTests
         Assert.Throws<ArgumentOutOfRangeException>(() => ThumbHash.ThumbHashToAverageRgba(stackalloc byte[4]));
     }
 
-    [Fact]
-    public void ThumbHashToApproximateAspectRatio()
+    [Theory]
+    [MemberData(nameof(TestThumbHashRatios))]
+    public void ThumbHashToApproximateAspectRatio(byte[] thumbhash, float aspectRatio)
     {
-        Assert.Equal(FlowerRatio, ThumbHash.ThumbHashToApproximateAspectRatio(FlowerThumbHash));
+        var expected = aspectRatio;
+        var actual = ThumbHash.ThumbHashToApproximateAspectRatio(thumbhash);
+
+        Assert.Equal(expected, actual);
     }
 
     [Fact]
