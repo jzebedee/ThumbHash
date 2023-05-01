@@ -13,6 +13,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{9922EF40
 		.github\workflows\release.yml = .github\workflows\release.yml
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThumbHash.Benchmarks", "bench\ThumbHash.Benchmarks.csproj", "{CE953B4C-43B8-402A-AA29-689973D22BDF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{24771381-7EA1-445D-B58F-953EDF01333A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{24771381-7EA1-445D-B58F-953EDF01333A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{24771381-7EA1-445D-B58F-953EDF01333A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CE953B4C-43B8-402A-AA29-689973D22BDF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE953B4C-43B8-402A-AA29-689973D22BDF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE953B4C-43B8-402A-AA29-689973D22BDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE953B4C-43B8-402A-AA29-689973D22BDF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
