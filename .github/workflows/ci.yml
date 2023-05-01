@@ -12,12 +12,14 @@ jobs:
           6.0.x
           7.0.x
           8.0.100-preview.3.23178.7
+    - name: Install dependencies
+      run: sudo apt-get install -y fontconfig
     - name: Restore
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore --configuration Release
     - name: Test
-      run: dotnet test --no-restore --configuration Release --logger trx --results-directory "TestResults"
+      run: dotnet test --no-restore --no-build --configuration Release --logger trx --results-directory "TestResults"
     - name: Upload test results
       uses: actions/upload-artifact@v2
       with:
