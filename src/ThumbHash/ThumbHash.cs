@@ -148,14 +148,15 @@ public static class ThumbHash
         // Convert the image from RGBA to LPQA (composite atop the average color)
         for (int i = 0, j = 0; i < rgba.Length; i += 4, j++)
         {
-            var alpha = rgba[i + 3] / 255.0f;
-            var r = avg_r * (1.0f - alpha) + alpha / 255.0f * rgba[i + 0];
-            var g = avg_g * (1.0f - alpha) + alpha / 255.0f * rgba[i + 1];
-            var b = avg_b * (1.0f - alpha) + alpha / 255.0f * rgba[i + 2];
-            l[j] = (r + g + b) / 3.0f;
-            p[j] = (r + g) / 2.0f - b;
-            q[j] = r - g;
+            var pixel = rgba.Slice(i, 4);
+            var alpha = pixel[3] / 255.0f;
+            var b = avg_b * (1.0f - alpha) + alpha / 255.0f * pixel[2];
+            var g = avg_g * (1.0f - alpha) + alpha / 255.0f * pixel[1];
+            var r = avg_r * (1.0f - alpha) + alpha / 255.0f * pixel[0];
             a[j] = alpha;
+            q[j] = r - g;
+            p[j] = (r + g) / 2.0f - b;
+            l[j] = (r + g + b) / 3.0f;
         }
 
         // Encode using the DCT into DC (constant) and normalized AC (varying) terms
