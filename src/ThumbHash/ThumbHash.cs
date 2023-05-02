@@ -5,6 +5,27 @@ namespace ThumbHash;
 
 public static class ThumbHash
 {
+    private readonly ref struct Channel
+    {
+        public readonly float DC;
+        public readonly SpanOwner<float> AC;
+        public readonly float Scale;
+
+        public Channel(float dc, SpanOwner<float> ac, float scale)
+        {
+            DC = dc;
+            AC = ac;
+            Scale = scale;
+        }
+
+        public void Deconstruct(out float dc, out SpanOwner<float> ac, out float scale)
+        {
+            dc = DC;
+            ac = AC;
+            scale = Scale;
+        }
+    }
+
     private const int MaxHash = 25;
     private const int MinHash = 5;
 
@@ -33,6 +54,13 @@ public static class ThumbHash
     }
     #endregion
 
+    /// <summary>
+    /// Encodes an RGBA image to a ThumbHash.
+    /// </summary>
+    /// <param name="width">The width of the input image. Must be ≤100px.</param>
+    /// <param name="height">The height of the input image. Must be ≤100px.</param>
+    /// <param name="rgba">The pixels in the input image, row-by-row. RGB should not be premultiplied by A. Must have `w*h*4` elements.</param>
+    /// <returns>Byte array containing the ThumbHash</returns>
     public static byte[] RgbaToThumbHash(int width, int height, ReadOnlySpan<byte> rgba)
     {
         Span<byte> hash = stackalloc byte[MaxHash];
@@ -106,7 +134,9 @@ public static class ThumbHash
         var l_limit = has_alpha ? 5 : 7; // Use fewer luminance bits if there's alpha
         var lx = Math.Max((int)MathF.Round(l_limit * w / MathF.Max(w, h)), 1);
         var ly = Math.Max((int)MathF.Round(l_limit * h / MathF.Max(w, h)), 1);
-        Span<float> lpqa = new float[w * h * 4],
+
+        using var lpqa_owner = new SpanOwner<float>(w * h * 4);
+        Span<float> lpqa = lpqa_owner.Span,
             // l: luminance
             l = lpqa[0..(w * h)],
             // p: yellow - blue
@@ -130,24 +160,16 @@ public static class ThumbHash
         }
 
         // Encode using the DCT into DC (constant) and normalized AC (varying) terms
-        (float, float[], float) encode_channel(ReadOnlySpan<float> channel, int nx, int ny)
+        Channel encode_channel(ReadOnlySpan<float> channel, int nx, int ny)
         {
             var dc = 0.0f;
-            float[] ac;// = new float[nx * ny / 2];
-            {
-                int nn = 0;
-                for (int cy = 0; cy < ny; cy++)
-                {
-                    for (int cx = cy > 0 ? 0 : 1; cx * ny < nx * (ny - cy); cx++)
-                    {
-                        nn++;
-                    }
-                }
-                ac = new float[nn];
-            }
+            var ac_owner = new SpanOwner<float>(nx * ny);
             var scale = 0.0f;
-            var fx = new float[w];
-            for (int cy = 0, n = 0; cy < ny; cy++)
+
+            Span<float> fx = stackalloc float[w];
+            Span<float> ac = ac_owner.Span;
+            int n = 0;
+            for (int cy = 0; cy < ny; cy++)
             {
                 var cx = 0;
                 while (cx * ny < nx * (ny - cy))
@@ -178,20 +200,24 @@ public static class ThumbHash
                     cx += 1;
                 }
             }
+            ac_owner = ac_owner.WithLength(n);
+            ac = ac_owner.Span;
+
             if (scale > 0.0f)
             {
-                foreach (ref var aci in ac.AsSpan())
+                foreach (ref var aci in ac)
                 {
                     aci = 0.5f + 0.5f / scale * aci;
                 }
             }
-            return (dc, ac, scale);
+
+            return new Channel(dc, ac_owner, scale);
         };
 
         var (l_dc, l_ac, l_scale) = encode_channel(l, Math.Max(lx, 3), Math.Max(ly, 3));
         var (p_dc, p_ac, p_scale) = encode_channel(p, 3, 3);
         var (q_dc, q_ac, q_scale) = encode_channel(q, 3, 3);
-        var (a_dc, a_ac, a_scale) = has_alpha ? encode_channel(a, 5, 5) : (1.0f, Array.Empty<float>(), 1.0f);
+        var (a_dc, a_ac, a_scale) = has_alpha ? encode_channel(a, 5, 5) : new Channel(1.0f, SpanOwner<float>.Empty, 1.0f);
 
         // Write the constants
         var is_landscape = w > h;
@@ -204,7 +230,7 @@ public static class ThumbHash
             | (((ushort)MathF.Round(63.0f * p_scale)) << 3)
             | (((ushort)MathF.Round(63.0f * q_scale)) << 9)
             | (is_landscape ? 1 << 15 : 0);
-        //var hash = Vec::with_capacity(25);
+
         int hi = 0;
         hash[hi++] = (byte)header24;
         hash[hi++] = (byte)(header24 >> 8);
@@ -223,9 +249,9 @@ public static class ThumbHash
         // Write the varying factors
         static void WriteFactor(ReadOnlySpan<float> ac, ref bool is_odd, ref int hi, Span<byte> hash)
         {
-            foreach (var f in ac)
+            for (int i = 0; i < ac.Length; i++)
             {
-                var u = (byte)MathF.Round(15.0f * f);
+                var u = (byte)MathF.Round(15.0f * ac[i]);
                 if (is_odd)
                 {
                     hash[hi - 1] |= (byte)(u << 4);
@@ -238,13 +264,19 @@ public static class ThumbHash
             }
         }
 
-        var is_odd = false;
-        WriteFactor(l_ac, ref is_odd, ref hi, hash);
-        WriteFactor(p_ac, ref is_odd, ref hi, hash);
-        WriteFactor(q_ac, ref is_odd, ref hi, hash);
-        if (has_alpha)
+        using (l_ac)
+        using (p_ac)
+        using (q_ac)
+        using (a_ac)
         {
-            WriteFactor(a_ac, ref is_odd, ref hi, hash);
+            var is_odd = false;
+            WriteFactor(l_ac.Span, ref is_odd, ref hi, hash);
+            WriteFactor(p_ac.Span, ref is_odd, ref hi, hash);
+            WriteFactor(q_ac.Span, ref is_odd, ref hi, hash);
+            if (has_alpha)
+            {
+                WriteFactor(a_ac.Span, ref is_odd, ref hi, hash);
+            }
         }
 
         return hi;
