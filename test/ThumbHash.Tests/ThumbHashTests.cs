@@ -88,8 +88,8 @@ public class ThumbHashTests
     [Fact]
     public void RgbaToThumbHash_ThrowsOnBadPixelSize()
     {
-        Assert.Throws<ArgumentOutOfRangeException>("rgba.Length", () => ThumbHash.RgbaToThumbHash(1, 1, stackalloc byte[3]));
-        Assert.Throws<ArgumentOutOfRangeException>("rgba.Length", () => ThumbHash.RgbaToThumbHash(1, 1, stackalloc byte[5]));
+        Assert.Throws<ArgumentOutOfRangeException>("rgba_bytes.Length", () => ThumbHash.RgbaToThumbHash(1, 1, stackalloc byte[3]));
+        Assert.Throws<ArgumentOutOfRangeException>("rgba_bytes.Length", () => ThumbHash.RgbaToThumbHash(1, 1, stackalloc byte[5]));
     }
 
     [Theory]

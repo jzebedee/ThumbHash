@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace ThumbHash;
 
@@ -23,6 +24,31 @@ public static class ThumbHash
             dc = DC;
             ac = AC;
             scale = Scale;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private readonly struct RGBA
+    {
+        public readonly byte R;
+        public readonly byte G;
+        public readonly byte B;
+        public readonly byte A;
+
+        public RGBA(byte r, byte g, byte b, byte a)
+        {
+            R = r;
+            G = g;
+            B = b;
+            A = a;
+        }
+
+        public void Deconstruct(out byte r, out byte g, out byte b, out byte a)
+        {
+            r = R;
+            g = G;
+            b = B;
+            a = A;
         }
     }
 
@@ -76,7 +102,7 @@ public static class ThumbHash
     /// <param name="h">The height of the input image. Must be ≤100px.</param>
     /// <param name="rgba">The pixels in the input image, row-by-row. RGB should not be premultiplied by A. Must have `w*h*4` elements.</param>
     /// <returns>Number of bytes written into hash span</returns>
-    public static int RgbaToThumbHash(Span<byte> hash, int w, int h, ReadOnlySpan<byte> rgba)
+    public static int RgbaToThumbHash(Span<byte> hash, int w, int h, ReadOnlySpan<byte> rgba_bytes)
     {
 #if NET8_0_OR_GREATER
         ArgumentOutOfRangeException.ThrowIfLessThan(hash.Length, MinHash);
@@ -103,9 +129,9 @@ public static class ThumbHash
         }
 #endif
 
-        if (rgba.Length != w * h * 4)
+        if (rgba_bytes.Length != w * h * 4)
         {
-            ThrowNotEqual(rgba.Length, w * h * 4);
+            ThrowNotEqual(rgba_bytes.Length, w * h * 4);
         }
 
         // Determine the average color
@@ -114,12 +140,13 @@ public static class ThumbHash
         var avg_b = 0.0f;
         var avg_a = 0.0f;
 
-        for (int i = 0; i < rgba.Length; i += 4)
+        var rgba = MemoryMarshal.Cast<byte, RGBA>(rgba_bytes);
+        foreach (ref readonly var pixel in rgba)
         {
-            var alpha = rgba[i + 3] / 255.0f;
-            avg_r += alpha / 255.0f * rgba[i + 0];
-            avg_g += alpha / 255.0f * rgba[i + 1];
-            avg_b += alpha / 255.0f * rgba[i + 2];
+            var alpha = pixel.A / 255.0f;
+            avg_b += alpha / 255.0f * pixel.B;
+            avg_g += alpha / 255.0f * pixel.G;
+            avg_r += alpha / 255.0f * pixel.R;
             avg_a += alpha;
         }
 
@@ -146,17 +173,18 @@ public static class ThumbHash
         var a = a_owner.Span;
 
         // Convert the image from RGBA to LPQA (composite atop the average color)
-        for (int i = 0, j = 0; i < rgba.Length; i += 4, j++)
+        int j = 0;
+        foreach(ref readonly var pixel in rgba)
         {
-            var pixel = rgba.Slice(i, 4);
-            var alpha = pixel[3] / 255.0f;
-            var b = avg_b * (1.0f - alpha) + alpha / 255.0f * pixel[2];
-            var g = avg_g * (1.0f - alpha) + alpha / 255.0f * pixel[1];
-            var r = avg_r * (1.0f - alpha) + alpha / 255.0f * pixel[0];
+            var alpha = pixel.A / 255.0f;
+            var b = avg_b * (1.0f - alpha) + alpha / 255.0f * pixel.B;
+            var g = avg_g * (1.0f - alpha) + alpha / 255.0f * pixel.G;
+            var r = avg_r * (1.0f - alpha) + alpha / 255.0f * pixel.R;
             a[j] = alpha;
             q[j] = r - g;
             p[j] = (r + g) / 2.0f - b;
             l[j] = (r + g + b) / 3.0f;
+            j += 1;
         }
 
         // Encode using the DCT into DC (constant) and normalized AC (varying) terms
