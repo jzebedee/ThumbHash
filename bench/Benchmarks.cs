@@ -57,9 +57,9 @@ public class Benchmarks
 
     [Benchmark]
     [ArgumentsSource(nameof(Images_NoAlpha))]
-    public byte[] RgbaToThumbHash_NoAlpha(SKBitmap image) => ThumbHash.RgbaToThumbHash(image.Width, image.Height, image.GetPixelSpan());
+    public int RgbaToThumbHash_NoAlpha(SKBitmap image) => ThumbHash.RgbaToThumbHash(stackalloc byte[25], image.Width, image.Height, image.GetPixelSpan());
 
     [Benchmark]
     [ArgumentsSource(nameof(Images_Alpha))]
-    public byte[] RgbaToThumbHash_Alpha(SKBitmap image) => ThumbHash.RgbaToThumbHash(image.Width, image.Height, image.GetPixelSpan());
+    public int RgbaToThumbHash_Alpha(SKBitmap image) => ThumbHash.RgbaToThumbHash(stackalloc byte[25], image.Width, image.Height, image.GetPixelSpan());
 }
