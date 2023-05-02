@@ -135,16 +135,15 @@ public static class ThumbHash
         var lx = Math.Max((int)MathF.Round(l_limit * w / MathF.Max(w, h)), 1);
         var ly = Math.Max((int)MathF.Round(l_limit * h / MathF.Max(w, h)), 1);
 
-        using var lpqa_owner = new SpanOwner<float>(w * h * 4);
-        Span<float> lpqa = lpqa_owner.Span,
-            // l: luminance
-            l = lpqa[0..(w * h)],
-            // p: yellow - blue
-            p = lpqa[(w * h)..(w * h * 2)],
-            // q: red - green
-            q = lpqa[(w * h * 2)..(w * h * 3)],
-            // a: alpha
-            a = lpqa[(w * h * 3)..];
+        using var l_owner = new SpanOwner<float>(w * h); // l: luminance
+        using var p_owner = new SpanOwner<float>(w * h); // p: yellow - blue
+        using var q_owner = new SpanOwner<float>(w * h); // q: red - green
+        using var a_owner = new SpanOwner<float>(w * h); // a: alpha
+
+        var l = l_owner.Span;
+        var p = p_owner.Span;
+        var q = q_owner.Span;
+        var a = a_owner.Span;
 
         // Convert the image from RGBA to LPQA (composite atop the average color)
         for (int i = 0, j = 0; i < rgba.Length; i += 4, j++)
