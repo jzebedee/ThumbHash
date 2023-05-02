@@ -6,6 +6,12 @@ namespace ThumbHash;
 
 internal readonly ref struct SpanOwner<T>
 {
+    private static ArrayPool<T> DefaultPool
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => ArrayPool<T>.Shared;
+    }
+
     private readonly T[] _buffer;
     private readonly int _length;
 
@@ -27,7 +33,7 @@ internal readonly ref struct SpanOwner<T>
 
     public SpanOwner<T> WithLength(int length) => new(length, _buffer);
 
-    public SpanOwner(int length) : this(length, ArrayPool<T>.Shared.Rent(length))
+    public SpanOwner(int length) : this(length, DefaultPool.Rent(length))
     {
     }
     private SpanOwner(int length, T[] buffer)
@@ -38,6 +44,6 @@ internal readonly ref struct SpanOwner<T>
 
     public void Dispose()
     {
-        ArrayPool<T>.Shared.Return(_buffer);
+        DefaultPool.Return(_buffer);
     }
 }
