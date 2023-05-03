@@ -30,9 +30,9 @@ public class ThumbHashToRgbaBenchmarks
 
     [Benchmark]
     [ArgumentsSource(nameof(ThumbHashes_NoAlpha))]
-    public (int,int,byte[]) ThumbHashToRgba_NoAlpha(byte[] thumbhash) => ThumbHash.ThumbHashToRgba(thumbhash);
+    public (int,int) ThumbHashToRgba_NoAlpha(byte[] thumbhash) => ThumbHash.ThumbHashToRgba(thumbhash, stackalloc byte[100 * 100 * 4]);
 
     [Benchmark]
     [ArgumentsSource(nameof(ThumbHashes_Alpha))]
-    public (int, int, byte[]) ThumbHashToRgba_Alpha(byte[] thumbhash) => ThumbHash.ThumbHashToRgba(thumbhash);
+    public (int, int) ThumbHashToRgba_Alpha(byte[] thumbhash) => ThumbHash.ThumbHashToRgba(thumbhash, stackalloc byte[100 * 100 * 4]);
 }
