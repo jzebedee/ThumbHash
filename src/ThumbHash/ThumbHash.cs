@@ -178,7 +178,7 @@ public static class ThumbHash
 
         // Convert the image from RGBA to LPQA (composite atop the average color)
         int j = 0;
-        foreach(ref readonly var pixel in rgba)
+        foreach (ref readonly var pixel in rgba)
         {
             var alpha = pixel.A / 255.0f;
             var b = avg_b * (1.0f - alpha) + alpha / 255.0f * pixel.B;
@@ -321,6 +321,19 @@ public static class ThumbHash
     /// <exception cref="System.ArgumentOutOfRangeException">Thrown if the input is too short.</exception>
     public static (int w, int h, byte[] rgba) ThumbHashToRgba(ReadOnlySpan<byte> hash)
     {
+        using var rgba_owner = new SpanOwner<byte>(MaxWidth * MaxHeight * 4);
+        var rgba = rgba_owner.Span;
+        var (w, h) = ThumbHashToRgba(hash, rgba);
+        return (w, h, rgba[..(w * h * 4)].ToArray());
+    }
+
+    /// <summary>
+    /// Decodes a ThumbHash to an RGBA image.
+    /// </summary>
+    /// <returns>Width, height, and unpremultiplied RGBA8 pixels of the rendered ThumbHash.</returns>
+    /// <exception cref="System.ArgumentOutOfRangeException">Thrown if the input is too short.</exception>
+    public static (int w, int h) ThumbHashToRgba(ReadOnlySpan<byte> hash, Span<byte> rgba)
+    {
         var ratio = ThumbHashToApproximateAspectRatio(hash);
 
         // Read the constants
@@ -342,9 +355,10 @@ public static class ThumbHash
         var (a_dc, a_scale) = has_alpha ? ((hash[5] & 15) / 15.0f, (hash[5] >> 4) / 15.0f) : (1.0f, 1.0f);
 
         // Read the varying factors (boost saturation by 1.25x to compensate for quantization)
-        static float[] decode_channel(ReadOnlySpan<byte> hash, int start, ref int index, int nx, int ny, float scale)
+        static SpanOwner<float> decode_channel(ReadOnlySpan<byte> hash, int start, ref int index, int nx, int ny, float scale)
         {
-            var ac = new float[nx * ny];
+            var ac_owner = new SpanOwner<float>(nx * ny);
+            var ac = ac_owner.Span;
             int n = 0;
             for (int cy = 0; cy < ny; cy++)
             {
@@ -355,103 +369,115 @@ public static class ThumbHash
                 }
             }
 
-            return ac[..n];
+            return ac_owner.WithLength(n);
         };
+
+        // Decode using the DCT into RGB
+        var (w, h) = ratio > 1.0f ? (32, (int)MathF.Round(32.0f / ratio)) : ((int)MathF.Round(32.0f * ratio), 32);
+#if NET8_0_OR_GREATER
+        ArgumentOutOfRangeException.ThrowIfLessThan(rgba.Length, w * h * 4);
+#else
+        if (rgba.Length < w * h * 4)
+        {
+            ThrowIfLessThan(rgba.Length, w * h * 4);
+        }
+#endif
 
         var ac_start = has_alpha ? 6 : 5;
         var ac_index = 0;
 
-        var l_ac = decode_channel(hash, ac_start, ref ac_index, lx, ly, l_scale);
-        var p_ac = decode_channel(hash, ac_start, ref ac_index, 3, 3, p_scale * 1.25f);
-        var q_ac = decode_channel(hash, ac_start, ref ac_index, 3, 3, q_scale * 1.25f);
-        var a_ac = has_alpha ? decode_channel(hash, ac_start, ref ac_index, 5, 5, a_scale) : Array.Empty<float>();
-
-        // Decode using the DCT into RGB
-        var (w, h) = ratio > 1.0f ? (32, (int)MathF.Round(32.0f / ratio)) : ((int)MathF.Round(32.0f * ratio), 32);
-        var rgba_array = new byte[w * h * 4];
-        Span<float> fx = stackalloc float[7];
-        Span<float> fy = stackalloc float[7];
-        fx.Clear();
-        fy.Clear();
-
-        ref RGBA pixel = ref MemoryMarshal.AsRef<RGBA>(rgba_array);
-        for (int y = 0; y < h; y++)
+        using (var l_ac_owner = decode_channel(hash, ac_start, ref ac_index, lx, ly, l_scale))
+        using (var p_ac_owner = decode_channel(hash, ac_start, ref ac_index, 3, 3, p_scale * 1.25f))
+        using (var q_ac_owner = decode_channel(hash, ac_start, ref ac_index, 3, 3, q_scale * 1.25f))
+        using (var a_ac_owner = has_alpha ? decode_channel(hash, ac_start, ref ac_index, 5, 5, a_scale) : SpanOwner<float>.Empty)
         {
-            for (int x = 0; x < w; x++, pixel = ref Unsafe.Add(ref pixel, 1))
+            var l_ac = l_ac_owner.Span;
+            var p_ac = p_ac_owner.Span;
+            var q_ac = q_ac_owner.Span;
+            var a_ac = a_ac_owner.Span;
+
+            Span<float> fx = stackalloc float[7];
+            Span<float> fy = stackalloc float[7];
+
+            ref RGBA pixel = ref MemoryMarshal.AsRef<RGBA>(rgba);
+            for (int y = 0; y < h; y++)
             {
-                var l = l_dc;
-                var p = p_dc;
-                var q = q_dc;
-                var a = a_dc;
+                for (int x = 0; x < w; x++, pixel = ref Unsafe.AddByteOffset(ref pixel, 4))
+                {
+                    var l = l_dc;
+                    var p = p_dc;
+                    var q = q_dc;
+                    var a = a_dc;
 
-                // Precompute the coefficients
-                for (int cx = 0; cx < Math.Max(lx, has_alpha ? 5 : 3); cx++)
-                {
-                    fx[cx] = MathF.Cos(MathF.PI / w * (x + 0.5f) * cx);
-                }
-                for (int cy = 0; cy < Math.Max(ly, has_alpha ? 5 : 3); cy++)
-                {
-                    fy[cy] = MathF.Cos(MathF.PI / h * (y + 0.5f) * cy);
-                }
-
-                // Decode L
-                for (int cy = 0, j = 0; cy < ly; cy++)
-                {
-                    var cx = cy > 0 ? 0 : 1;
-                    var fy2 = fy[cy] * 2.0f;
-                    while (cx * ly < lx * (ly - cy))
+                    // Precompute the coefficients
+                    for (int cx = 0; cx < Math.Max(lx, has_alpha ? 5 : 3); cx++)
                     {
-                        l += l_ac[j] * fx[cx] * fy2;
-                        j += 1;
-                        cx += 1;
+                        fx[cx] = MathF.Cos(MathF.PI / w * (x + 0.5f) * cx);
                     }
-                }
-
-                // Decode P and Q
-                for (int cy = 0, j = 0; cy < 3; cy++)
-                {
-                    var cx = cy > 0 ? 0 : 1;
-                    var fy2 = fy[cy] * 2.0f;
-                    while (cx < 3 - cy)
+                    for (int cy = 0; cy < Math.Max(ly, has_alpha ? 5 : 3); cy++)
                     {
-                        var f = fx[cx] * fy2;
-                        p += p_ac[j] * f;
-                        q += q_ac[j] * f;
-                        j += 1;
-                        cx += 1;
+                        fy[cy] = MathF.Cos(MathF.PI / h * (y + 0.5f) * cy);
                     }
-                }
 
-                // Decode A
-                if (has_alpha)
-                {
-                    for (int cy = 0, j = 0; cy < 5; cy++)
+                    // Decode L
+                    for (int cy = 0, j = 0; cy < ly; cy++)
                     {
                         var cx = cy > 0 ? 0 : 1;
                         var fy2 = fy[cy] * 2.0f;
-                        while (cx < 5 - cy)
+                        while (cx * ly < lx * (ly - cy))
                         {
-                            a += a_ac[j] * fx[cx] * fy2;
+                            l += l_ac[j] * fx[cx] * fy2;
                             j += 1;
                             cx += 1;
                         }
                     }
+
+                    // Decode P and Q
+                    for (int cy = 0, j = 0; cy < 3; cy++)
+                    {
+                        var cx = cy > 0 ? 0 : 1;
+                        var fy2 = fy[cy] * 2.0f;
+                        while (cx < 3 - cy)
+                        {
+                            var f = fx[cx] * fy2;
+                            p += p_ac[j] * f;
+                            q += q_ac[j] * f;
+                            j += 1;
+                            cx += 1;
+                        }
+                    }
+
+                    // Decode A
+                    if (has_alpha)
+                    {
+                        for (int cy = 0, j = 0; cy < 5; cy++)
+                        {
+                            var cx = cy > 0 ? 0 : 1;
+                            var fy2 = fy[cy] * 2.0f;
+                            while (cx < 5 - cy)
+                            {
+                                a += a_ac[j] * fx[cx] * fy2;
+                                j += 1;
+                                cx += 1;
+                            }
+                        }
+                    }
+
+                    // Convert to RGB
+                    var b = l - 2.0f / 3.0f * p;
+                    var r = (3.0f * l - b + q) / 2.0f;
+                    var g = r - q;
+
+                    pixel = new(
+                        r: (byte)(Math.Clamp(r, 0.0f, 1.0f) * 255.0f),
+                        g: (byte)(Math.Clamp(g, 0.0f, 1.0f) * 255.0f),
+                        b: (byte)(Math.Clamp(b, 0.0f, 1.0f) * 255.0f),
+                        a: (byte)(Math.Clamp(a, 0.0f, 1.0f) * 255.0f));
                 }
-
-                // Convert to RGB
-                var b = l - 2.0f / 3.0f * p;
-                var r = (3.0f * l - b + q) / 2.0f;
-                var g = r - q;
-
-                pixel = new(
-                    r: (byte)(Math.Clamp(r, 0.0f, 1.0f) * 255.0f),
-                    g: (byte)(Math.Clamp(g, 0.0f, 1.0f) * 255.0f),
-                    b: (byte)(Math.Clamp(b, 0.0f, 1.0f) * 255.0f),
-                    a: (byte)(Math.Clamp(a, 0.0f, 1.0f) * 255.0f));
             }
         }
 
-        return (w, h, rgba_array);
+        return (w, h);
     }
 
     /// <summary>
