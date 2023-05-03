@@ -12,6 +12,7 @@ public static class ThumbHash
         public readonly SpanOwner<float> AC;
         public readonly float Scale;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Channel(float dc, SpanOwner<float> ac, float scale)
         {
             DC = dc;
@@ -19,6 +20,7 @@ public static class ThumbHash
             Scale = scale;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Deconstruct(out float dc, out SpanOwner<float> ac, out float scale)
         {
             dc = DC;
@@ -35,6 +37,7 @@ public static class ThumbHash
         public readonly byte B;
         public readonly byte A;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RGBA(byte r, byte g, byte b, byte a)
         {
             R = r;
@@ -43,6 +46,7 @@ public static class ThumbHash
             A = a;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Deconstruct(out byte r, out byte g, out byte b, out byte a)
         {
             r = R;
