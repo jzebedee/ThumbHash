@@ -370,9 +370,10 @@ public static class ThumbHash
         fx.Clear();
         fy.Clear();
 
-        for (int y = 0, i = 0; y < h; y++)
+        ref RGBA pixel = ref MemoryMarshal.AsRef<RGBA>(rgba_array);
+        for (int y = 0; y < h; y++)
         {
-            for (int x = 0; x < w; x++, i += 4)
+            for (int x = 0; x < w; x++, pixel = ref Unsafe.Add(ref pixel, 1))
             {
                 var l = l_dc;
                 var p = p_dc;
@@ -438,11 +439,11 @@ public static class ThumbHash
                 var r = (3.0f * l - b + q) / 2.0f;
                 var g = r - q;
 
-                Span<byte> rgba = rgba_array.AsSpan(i, 4);
-                rgba[0] = (byte)(Math.Clamp(r, 0.0f, 1.0f) * 255.0f);
-                rgba[1] = (byte)(Math.Clamp(g, 0.0f, 1.0f) * 255.0f);
-                rgba[2] = (byte)(Math.Clamp(b, 0.0f, 1.0f) * 255.0f);
-                rgba[3] = (byte)(Math.Clamp(a, 0.0f, 1.0f) * 255.0f);
+                pixel = new(
+                    r: (byte)(Math.Clamp(r, 0.0f, 1.0f) * 255.0f),
+                    g: (byte)(Math.Clamp(g, 0.0f, 1.0f) * 255.0f),
+                    b: (byte)(Math.Clamp(b, 0.0f, 1.0f) * 255.0f),
+                    a: (byte)(Math.Clamp(a, 0.0f, 1.0f) * 255.0f));
             }
         }
 
