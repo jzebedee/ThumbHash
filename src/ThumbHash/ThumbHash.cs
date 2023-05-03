@@ -104,7 +104,7 @@ public static class ThumbHash
     /// <param name="hash"></param>
     /// <param name="w">The width of the input image. Must be ≤100px.</param>
     /// <param name="h">The height of the input image. Must be ≤100px.</param>
-    /// <param name="rgba">The pixels in the input image, row-by-row. RGB should not be premultiplied by A. Must have `w*h*4` elements.</param>
+    /// <param name="rgba_bytes">The pixels in the input image, row-by-row. RGB should not be premultiplied by A. Must have `w*h*4` elements.</param>
     /// <returns>Number of bytes written into hash span</returns>
     public static int RgbaToThumbHash(Span<byte> hash, int w, int h, ReadOnlySpan<byte> rgba_bytes)
     {
