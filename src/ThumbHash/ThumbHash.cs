@@ -59,8 +59,11 @@ public static class ThumbHash
     private const int MaxHash = 25;
     private const int MinHash = 5;
 
-    private const int MaxWidth = 100;
-    private const int MaxHeight = 100;
+    private const int MaxRgbaWidth = 100;
+    private const int MaxRgbaHeight = 100;
+
+    private const int MaxThumbHashWidth = 32;
+    private const int MaxThumbHashHeight = 32;
 
     #region ThrowHelpers
 #if !NET8_0_OR_GREATER
@@ -119,17 +122,17 @@ public static class ThumbHash
 
         // Encoding an image larger than 100x100 is slow with no benefit
 #if NET8_0_OR_GREATER
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(w, MaxWidth);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(h, MaxHeight);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(w, MaxRgbaWidth);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(h, MaxRgbaHeight);
 #else
-        if (w > MaxWidth)
+        if (w > MaxRgbaWidth)
         {
-            ThrowIfGreaterThan(w, MaxWidth);
+            ThrowIfGreaterThan(w, MaxRgbaWidth);
         }
 
-        if (h > MaxHeight)
+        if (h > MaxRgbaHeight)
         {
-            ThrowIfGreaterThan(h, MaxHeight);
+            ThrowIfGreaterThan(h, MaxRgbaHeight);
         }
 #endif
 
@@ -321,7 +324,7 @@ public static class ThumbHash
     /// <exception cref="System.ArgumentOutOfRangeException">Thrown if the input is too short.</exception>
     public static (int w, int h, byte[] rgba) ThumbHashToRgba(ReadOnlySpan<byte> hash)
     {
-        using var rgba_owner = new SpanOwner<byte>(MaxWidth * MaxHeight * 4);
+        using var rgba_owner = new SpanOwner<byte>(MaxThumbHashWidth * MaxThumbHashHeight * 4);
         var rgba = rgba_owner.Span;
         var (w, h) = ThumbHashToRgba(hash, rgba);
         return (w, h, rgba[..(w * h * 4)].ToArray());
@@ -332,6 +335,7 @@ public static class ThumbHash
     /// </summary>
     /// <returns>Width, height, and unpremultiplied RGBA8 pixels of the rendered ThumbHash.</returns>
     /// <exception cref="System.ArgumentOutOfRangeException">Thrown if the input is too short.</exception>
+    /// <exception cref="System.ArgumentOutOfRangeException">Thrown if the RGBA span length is less than `w * h * 4` bytes.</exception>
     public static (int w, int h) ThumbHashToRgba(ReadOnlySpan<byte> hash, Span<byte> rgba)
     {
         var ratio = ThumbHashToApproximateAspectRatio(hash);
@@ -373,7 +377,7 @@ public static class ThumbHash
         };
 
         // Decode using the DCT into RGB
-        var (w, h) = ratio > 1.0f ? (32, (int)MathF.Round(32.0f / ratio)) : ((int)MathF.Round(32.0f * ratio), 32);
+        var (w, h) = ratio > 1.0f ? (MaxThumbHashWidth, (int)MathF.Round(32.0f / ratio)) : ((int)MathF.Round(32.0f * ratio), MaxThumbHashHeight);
 #if NET8_0_OR_GREATER
         ArgumentOutOfRangeException.ThrowIfLessThan(rgba.Length, w * h * 4);
 #else
