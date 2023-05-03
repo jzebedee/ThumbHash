@@ -9,7 +9,7 @@ namespace ThumbHash.Benchmarks;
 
 [MemoryDiagnoser]
 [HardwareCounters(HardwareCounter.BranchInstructions, HardwareCounter.BranchMispredictions)]
-public class Benchmarks
+public class RgbaToThumbHashBenchmarks
 {
     private static SKBitmap GetBitmap(string path, bool fixPremul = false)
     {
