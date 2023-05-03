@@ -31,17 +31,21 @@ internal readonly ref struct SpanOwner<T>
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public SpanOwner<T> WithLength(int length) => new(length, _buffer);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public SpanOwner(int length) : this(length, DefaultPool.Rent(length))
     {
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private SpanOwner(int length, T[] buffer)
     {
         _length = length;
         _buffer = buffer;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Dispose()
     {
         DefaultPool.Return(_buffer);
