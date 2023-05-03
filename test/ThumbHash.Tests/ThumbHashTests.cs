@@ -123,7 +123,13 @@ public class ThumbHashTests
     [Fact]
     public void ThumbHashToRgba_ThrowsOnBadHashSize()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => ThumbHash.ThumbHashToRgba(stackalloc byte[4]));
+        Assert.Throws<ArgumentOutOfRangeException>("hash.Length", () => ThumbHash.ThumbHashToRgba(stackalloc byte[4]));
+    }
+
+    [Fact]
+    public void ThumbHashToRgba_ThrowsOnBadRgbaSize()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>("rgba.Length", () => ThumbHash.ThumbHashToRgba(FlowerThumbHash, stackalloc byte[4]));
     }
 
     [Theory]
