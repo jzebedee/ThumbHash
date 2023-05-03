@@ -88,8 +88,8 @@ public class ThumbHashTests
     [Fact]
     public void RgbaToThumbHash_ThrowsOnBadPixelSize()
     {
-        Assert.Throws<ArgumentOutOfRangeException>("rgba.Length", () => ThumbHash.RgbaToThumbHash(1, 1, stackalloc byte[3]));
-        Assert.Throws<ArgumentOutOfRangeException>("rgba.Length", () => ThumbHash.RgbaToThumbHash(1, 1, stackalloc byte[5]));
+        Assert.Throws<ArgumentOutOfRangeException>("rgba_bytes.Length", () => ThumbHash.RgbaToThumbHash(1, 1, stackalloc byte[3]));
+        Assert.Throws<ArgumentOutOfRangeException>("rgba_bytes.Length", () => ThumbHash.RgbaToThumbHash(1, 1, stackalloc byte[5]));
     }
 
     [Theory]
@@ -123,7 +123,13 @@ public class ThumbHashTests
     [Fact]
     public void ThumbHashToRgba_ThrowsOnBadHashSize()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => ThumbHash.ThumbHashToRgba(stackalloc byte[4]));
+        Assert.Throws<ArgumentOutOfRangeException>("hash.Length", () => ThumbHash.ThumbHashToRgba(stackalloc byte[4]));
+    }
+
+    [Fact]
+    public void ThumbHashToRgba_ThrowsOnBadRgbaSize()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>("rgba.Length", () => ThumbHash.ThumbHashToRgba(FlowerThumbHash, stackalloc byte[4]));
     }
 
     [Theory]
