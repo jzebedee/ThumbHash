@@ -23,12 +23,20 @@ internal readonly ref struct SpanOwner<T>
 
     public Span<T> Span
     {
+#if NET6_0_OR_GREATER
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get
         {
             ref T r0 = ref MemoryMarshal.GetArrayDataReference(_buffer);
             return MemoryMarshal.CreateSpan(ref r0, _length);
         }
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get
+        {
+            return new Span<T>(_buffer, 0, _length);
+        }
+#endif
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

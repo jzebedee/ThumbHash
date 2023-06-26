@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -67,20 +68,17 @@ public static class ThumbHash
 
     #region ThrowHelpers
 #if !NET8_0_OR_GREATER
-    [DoesNotReturn]
-    static void ThrowIfLessThan<T>(T value, T other, [CallerArgumentExpression(nameof(value))] string? paramName = null)
+    public static void ThrowIfLessThan<T>(T value, T other, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         throw new ArgumentOutOfRangeException(paramName, value, $"'{value}' must be greater than or equal to '{other}'.");
     }
 
-    [DoesNotReturn]
-    static void ThrowIfGreaterThan<T>(T value, T other, [CallerArgumentExpression(nameof(value))] string? paramName = null)
+    public static void ThrowIfGreaterThan<T>(T value, T other, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         throw new ArgumentOutOfRangeException(paramName, value, $"'{paramName}' must be less than or equal to '{other}'.");
     }
 #endif
 
-    [DoesNotReturn]
     static void ThrowNotEqual<T>(T value, T other, [CallerArgumentExpression(nameof(value))] string? paramName = null, [CallerArgumentExpression(nameof(other))] string? otherName = null)
     {
         throw new ArgumentOutOfRangeException(paramName, value, $"'{paramName}' must be equal to '{other}' ('{otherName}').");
@@ -166,8 +164,8 @@ public static class ThumbHash
 
         var has_alpha = avg_a < (w * h);
         var l_limit = has_alpha ? 5 : 7; // Use fewer luminance bits if there's alpha
-        var lx = Math.Max((int)MathF.Round(l_limit * w / MathF.Max(w, h)), 1);
-        var ly = Math.Max((int)MathF.Round(l_limit * h / MathF.Max(w, h)), 1);
+        var lx = Math.Max((int)(float)Math.Round(l_limit * w / (float)Math.Max(w, h)), 1);
+        var ly = Math.Max((int)(float)Math.Round(l_limit * h / (float)Math.Max(w, h)), 1);
 
         using var l_owner = new SpanOwner<float>(w * h); // l: luminance
         using var p_owner = new SpanOwner<float>(w * h); // p: yellow - blue
@@ -212,11 +210,11 @@ public static class ThumbHash
                     var f = 0.0f;
                     for (int x = 0; x < w; x++)
                     {
-                        fx[x] = MathF.Cos(MathF.PI / w * cx * (x + 0.5f));
+                        fx[x] = (float)Math.Cos(Convert.ToSingle(Math.PI) / w * cx * (x + 0.5f));
                     }
                     for (int y = 0; y < h; y++)
                     {
-                        var fy = MathF.Cos(MathF.PI / h * cy * (y + 0.5f));
+                        var fy = (float)Math.Cos(Convert.ToSingle(Math.PI) / h * cy * (y + 0.5f));
                         for (int x = 0; x < w; x++)
                         {
                             f += channel[x + y * w] * fx[x] * fy;
@@ -226,7 +224,7 @@ public static class ThumbHash
                     if (cx > 0 || cy > 0)
                     {
                         ac[n++] = f;
-                        scale = MathF.Max(MathF.Abs(f), scale);
+                        scale = (float)Math.Max((float)Math.Abs(f), scale);
                     }
                     else
                     {
@@ -256,14 +254,14 @@ public static class ThumbHash
 
         // Write the constants
         var is_landscape = w > h;
-        var header24 = (uint)MathF.Round(63.0f * l_dc)
-            | (((uint)MathF.Round(31.5f + 31.5f * p_dc)) << 6)
-            | (((uint)MathF.Round(31.5f + 31.5f * q_dc)) << 12)
-            | (((uint)MathF.Round(31.0f * l_scale)) << 18)
+        var header24 = (uint)(float)Math.Round(63.0f * l_dc)
+            | (((uint)(float)Math.Round(31.5f + 31.5f * p_dc)) << 6)
+            | (((uint)(float)Math.Round(31.5f + 31.5f * q_dc)) << 12)
+            | (((uint)(float)Math.Round(31.0f * l_scale)) << 18)
             | (has_alpha ? 1u << 23 : 0);
         var header16 = (ushort)(is_landscape ? ly : lx)
-            | (((ushort)MathF.Round(63.0f * p_scale)) << 3)
-            | (((ushort)MathF.Round(63.0f * q_scale)) << 9)
+            | (((ushort)(float)Math.Round(63.0f * p_scale)) << 3)
+            | (((ushort)(float)Math.Round(63.0f * q_scale)) << 9)
             | (is_landscape ? 1 << 15 : 0);
 
         int hi = 0;
@@ -274,8 +272,8 @@ public static class ThumbHash
         hash[hi++] = (byte)(header16 >> 8);
         if (has_alpha)
         {
-            var fa_dc = MathF.Round(15.0f * a_dc);
-            var fa_scale = MathF.Round(15.0f * a_scale);
+            var fa_dc = (float)Math.Round(15.0f * a_dc);
+            var fa_scale = (float)Math.Round(15.0f * a_scale);
             var ia_dc = (byte)fa_dc;
             var ia_scale = (byte)fa_scale;
             hash[hi++] = (byte)(ia_dc | (ia_scale << 4));
@@ -286,7 +284,7 @@ public static class ThumbHash
         {
             for (int i = 0; i < ac.Length; i++)
             {
-                var u = (byte)MathF.Round(15.0f * ac[i]);
+                var u = (byte)((float)Math.Round(15.0f * ac[i]));
                 if (is_odd)
                 {
                     hash[hi - 1] |= (byte)(u << 4);
@@ -377,7 +375,7 @@ public static class ThumbHash
         };
 
         // Decode using the DCT into RGB
-        var (w, h) = ratio > 1.0f ? (MaxThumbHashWidth, (int)MathF.Round(32.0f / ratio)) : ((int)MathF.Round(32.0f * ratio), MaxThumbHashHeight);
+        var (w, h) = ratio > 1.0f ? (MaxThumbHashWidth, (int)((float)Math.Round(32.0f / ratio))) : ((int)((float)Math.Round(32.0f * ratio)), MaxThumbHashHeight);
 #if NET8_0_OR_GREATER
         ArgumentOutOfRangeException.ThrowIfLessThan(rgba.Length, w * h * 4);
 #else
@@ -403,10 +401,15 @@ public static class ThumbHash
             Span<float> fx = stackalloc float[7];
             Span<float> fy = stackalloc float[7];
 
+#if NET6_0_OR_GREATER
             ref RGBA pixel = ref MemoryMarshal.AsRef<RGBA>(rgba);
+#else
+            var rgbaSpan = MemoryMarshal.Cast<byte, RGBA>(rgba);
+            ref RGBA pixel = ref rgbaSpan[0];
+#endif
             for (int y = 0; y < h; y++)
             {
-                for (int x = 0; x < w; x++, pixel = ref Unsafe.AddByteOffset(ref pixel, 4))
+                for (int x = 0; x < w; x++, pixel = ref Unsafe.AddByteOffset(ref pixel, (IntPtr)4))
                 {
                     var l = l_dc;
                     var p = p_dc;
@@ -416,11 +419,11 @@ public static class ThumbHash
                     // Precompute the coefficients
                     for (int cx = 0; cx < Math.Max(lx, has_alpha ? 5 : 3); cx++)
                     {
-                        fx[cx] = MathF.Cos(MathF.PI / w * (x + 0.5f) * cx);
+                        fx[cx] = (float)Math.Cos(Convert.ToSingle(Math.PI) / w * (x + 0.5f) * cx);
                     }
                     for (int cy = 0; cy < Math.Max(ly, has_alpha ? 5 : 3); cy++)
                     {
-                        fy[cy] = MathF.Cos(MathF.PI / h * (y + 0.5f) * cy);
+                        fy[cy] = (float)Math.Cos(Convert.ToSingle(Math.PI) / h * (y + 0.5f) * cy);
                     }
 
                     // Decode L
@@ -473,10 +476,10 @@ public static class ThumbHash
                     var g = r - q;
 
                     pixel = new(
-                        r: (byte)(Math.Clamp(r, 0.0f, 1.0f) * 255.0f),
-                        g: (byte)(Math.Clamp(g, 0.0f, 1.0f) * 255.0f),
-                        b: (byte)(Math.Clamp(b, 0.0f, 1.0f) * 255.0f),
-                        a: (byte)(Math.Clamp(a, 0.0f, 1.0f) * 255.0f));
+                        r: (byte)(r.Clamp(0.0f, 1.0f) * 255.0f),
+                        g: (byte)(g.Clamp(0.0f, 1.0f) * 255.0f),
+                        b: (byte)(b.Clamp(0.0f, 1.0f) * 255.0f),
+                        a: (byte)(a.Clamp(0.0f, 1.0f) * 255.0f));
                 }
             }
         }
@@ -510,9 +513,9 @@ public static class ThumbHash
         var r = (3.0f * l - b + q) / 2.0f;
         var g = r - q;
 
-        return (r: Math.Clamp(r, 0.0f, 1.0f),
-                g: Math.Clamp(g, 0.0f, 1.0f),
-                b: Math.Clamp(b, 0.0f, 1.0f),
+        return (r: r.Clamp(0.0f, 1.0f),
+                g: g.Clamp(0.0f, 1.0f),
+                b: b.Clamp(0.0f, 1.0f),
                 a);
     }
 
@@ -538,5 +541,15 @@ public static class ThumbHash
         var lx = is_landscape ? l_max : l_min;
         var ly = is_landscape ? l_min : l_max;
         return (float)lx / ly;
+    }
+}
+
+public static class MathExtensions
+{
+    public static T Clamp<T>(this T val, T min, T max) where T : IComparable<T>
+    {
+        if (val.CompareTo(min) < 0) return min;
+        else if (val.CompareTo(max) > 0) return max;
+        else return val;
     }
 }
