@@ -45,16 +45,7 @@ public static class ThumbHash
             B = b;
             A = a;
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Deconstruct(out byte r, out byte g, out byte b, out byte a)
-        {
-            r = R;
-            g = G;
-            b = B;
-            a = A;
         }
-    }
 
     private const int MaxHash = 25;
     private const int MinHash = 5;
