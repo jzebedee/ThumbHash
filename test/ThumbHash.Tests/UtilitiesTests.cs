@@ -1,39 +1,10 @@
 using SkiaSharp;
-using System.Buffers;
 
 namespace ThumbHashes.Tests;
+using static Resources;
 
 public class UtilitiesTests
 {
-    private static SKBitmap FlowerBitmap => GetBitmap("Resources/flower.jpg");
-
-    private static byte[] FlowerThumbHash => Convert.FromHexString("934A062D069256C374055867DA8AB6679490510719");
-
-    private static (float r, float g, float b, float a) FlowerThumbHashAverages => (r: 0.484127015f, g: 0.341269821f, b: 0.0793650597f, a: 1f);
-
-    private static SKBitmap FlowerThumbHashRendered => GetBitmap("Resources/flower_thumbhash_rust.png");
-
-    private const float FlowerAspectRatio = 0.714285731f;
-
-    private static SKBitmap TuxBitmap => GetBitmap("Resources/tux.png", fixPremul: true);
-
-    private static byte[] TuxThumbHash => Convert.FromHexString("A1198A1C02383A25D727F68B971FF7F9717F80376758987906");
-
-    private static (float r, float g, float b, float a) TuxThumbHashAverages => (r: 0.616402208f, g: 0.568783104f, b: 0.386243373f, a: 0.533333361f);
-
-    private static SKBitmap TuxThumbHashRendered => GetBitmap("Resources/tux_thumbhash_rust.png");
-
-    private const float TuxAspectRatio = 0.800000011f;
-
-    private static SKBitmap GetBitmap(string path, bool fixPremul = false)
-    {
-        using var skbmp = fixPremul
-            ? SKBitmap.Decode(path, SKBitmap.DecodeBounds(path).WithAlphaType(SKAlphaType.Unpremul))
-            : SKBitmap.Decode(path);
-        var result = skbmp.Copy(SKColorType.Rgba8888);
-        return result;
-    }
-
     public static IEnumerable<object[]> TestImages
     {
         get
