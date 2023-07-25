@@ -3,9 +3,36 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace ThumbHashes;
+#if !NET6_0_OR_GREATER
+using MathF = System.Math;
+#endif
 
 public static class Utilities
 {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static float Clamp(float value, float min, float max)
+#if NET6_0_OR_GREATER
+        => Math.Clamp(value, min, max);
+#else
+    {
+        if (min > max)
+        {
+            ThrowIfGreaterThan(min, max);
+        }
+ 
+        if (value < min)
+        {
+            return min;
+        }
+        else if (value > max)
+        {
+            return max;
+        }
+ 
+        return value;
+    }
+#endif
+
     private readonly ref struct Channel
     {
         public readonly float DC;
@@ -157,8 +184,8 @@ public static class Utilities
 
         var has_alpha = avg_a < (w * h);
         var l_limit = has_alpha ? 5 : 7; // Use fewer luminance bits if there's alpha
-        var lx = Math.Max((int)MathF.Round(l_limit * w / MathF.Max(w, h)), 1);
-        var ly = Math.Max((int)MathF.Round(l_limit * h / MathF.Max(w, h)), 1);
+        var lx = Math.Max((int)MathF.Round(l_limit * w / (float)MathF.Max(w, h)), 1);
+        var ly = Math.Max((int)MathF.Round(l_limit * h / (float)MathF.Max(w, h)), 1);
 
         using var l_owner = new SpanOwner<float>(w * h); // l: luminance
         using var p_owner = new SpanOwner<float>(w * h); // p: yellow - blue
@@ -203,11 +230,11 @@ public static class Utilities
                     var f = 0.0f;
                     for (int x = 0; x < w; x++)
                     {
-                        fx[x] = MathF.Cos(MathF.PI / w * cx * (x + 0.5f));
+                        fx[x] = (float)MathF.Cos(MathF.PI / w * cx * (x + 0.5f));
                     }
                     for (int y = 0; y < h; y++)
                     {
-                        var fy = MathF.Cos(MathF.PI / h * cy * (y + 0.5f));
+                        var fy = (float)MathF.Cos(MathF.PI / h * cy * (y + 0.5f));
                         for (int x = 0; x < w; x++)
                         {
                             f += channel[x + y * w] * fx[x] * fy;
@@ -394,10 +421,14 @@ public static class Utilities
             Span<float> fx = stackalloc float[7];
             Span<float> fy = stackalloc float[7];
 
+#if NET6_0_OR_GREATER
             ref RGBA pixel = ref MemoryMarshal.AsRef<RGBA>(rgba);
+#else
+            ref RGBA pixel = ref Unsafe.As<byte, RGBA>(ref MemoryMarshal.GetReference(rgba));
+#endif
             for (int y = 0; y < h; y++)
             {
-                for (int x = 0; x < w; x++, pixel = ref Unsafe.AddByteOffset(ref pixel, 4))
+                for (int x = 0; x < w; x++, pixel = ref Unsafe.AddByteOffset(ref pixel, (nint)4))
                 {
                     var l = l_dc;
                     var p = p_dc;
@@ -407,11 +438,11 @@ public static class Utilities
                     // Precompute the coefficients
                     for (int cx = 0; cx < Math.Max(lx, has_alpha ? 5 : 3); cx++)
                     {
-                        fx[cx] = MathF.Cos(MathF.PI / w * (x + 0.5f) * cx);
+                        fx[cx] = (float)MathF.Cos(MathF.PI / w * (x + 0.5f) * cx);
                     }
                     for (int cy = 0; cy < Math.Max(ly, has_alpha ? 5 : 3); cy++)
                     {
-                        fy[cy] = MathF.Cos(MathF.PI / h * (y + 0.5f) * cy);
+                        fy[cy] = (float)MathF.Cos(MathF.PI / h * (y + 0.5f) * cy);
                     }
 
                     // Decode L
@@ -464,10 +495,10 @@ public static class Utilities
                     var g = r - q;
 
                     pixel = new(
-                        r: (byte)(Math.Clamp(r, 0.0f, 1.0f) * 255.0f),
-                        g: (byte)(Math.Clamp(g, 0.0f, 1.0f) * 255.0f),
-                        b: (byte)(Math.Clamp(b, 0.0f, 1.0f) * 255.0f),
-                        a: (byte)(Math.Clamp(a, 0.0f, 1.0f) * 255.0f));
+                        r: (byte)(Clamp(r, 0.0f, 1.0f) * 255.0f),
+                        g: (byte)(Clamp(g, 0.0f, 1.0f) * 255.0f),
+                        b: (byte)(Clamp(b, 0.0f, 1.0f) * 255.0f),
+                        a: (byte)(Clamp(a, 0.0f, 1.0f) * 255.0f));
                 }
             }
         }
@@ -501,9 +532,9 @@ public static class Utilities
         var r = (3.0f * l - b + q) / 2.0f;
         var g = r - q;
 
-        return (r: Math.Clamp(r, 0.0f, 1.0f),
-                g: Math.Clamp(g, 0.0f, 1.0f),
-                b: Math.Clamp(b, 0.0f, 1.0f),
+        return (r: Clamp(r, 0.0f, 1.0f),
+                g: Clamp(g, 0.0f, 1.0f),
+                b: Clamp(b, 0.0f, 1.0f),
                 a);
     }
 
