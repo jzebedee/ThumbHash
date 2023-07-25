@@ -4,7 +4,7 @@ using SkiaSharp;
 using System.Collections.Generic;
 using System.IO;
 
-namespace ThumbHash.Benchmarks;
+namespace ThumbHashes.Benchmarks;
 
 [MemoryDiagnoser]
 [HardwareCounters(HardwareCounter.BranchInstructions, HardwareCounter.BranchMispredictions)]
@@ -57,9 +57,9 @@ public class RgbaToThumbHashBenchmarks
 
     [Benchmark]
     [ArgumentsSource(nameof(Images_NoAlpha))]
-    public int RgbaToThumbHash_NoAlpha(SKBitmap image) => ThumbHash.RgbaToThumbHash(stackalloc byte[25], image.Width, image.Height, image.GetPixelSpan());
+    public int RgbaToThumbHash_NoAlpha(SKBitmap image) => Utilities.RgbaToThumbHash(stackalloc byte[25], image.Width, image.Height, image.GetPixelSpan());
 
     [Benchmark]
     [ArgumentsSource(nameof(Images_Alpha))]
-    public int RgbaToThumbHash_Alpha(SKBitmap image) => ThumbHash.RgbaToThumbHash(stackalloc byte[25], image.Width, image.Height, image.GetPixelSpan());
+    public int RgbaToThumbHash_Alpha(SKBitmap image) => Utilities.RgbaToThumbHash(stackalloc byte[25], image.Width, image.Height, image.GetPixelSpan());
 }

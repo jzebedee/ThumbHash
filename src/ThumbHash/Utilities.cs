@@ -2,9 +2,9 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace ThumbHash;
+namespace ThumbHashes;
 
-public static class ThumbHash
+public static class Utilities
 {
     private readonly ref struct Channel
     {
@@ -45,7 +45,7 @@ public static class ThumbHash
             B = b;
             A = a;
         }
-        }
+    }
 
     private const int MaxHash = 25;
     private const int MinHash = 5;

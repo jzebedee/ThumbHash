@@ -3,7 +3,7 @@ using BenchmarkDotNet.Diagnosers;
 using System;
 using System.Collections.Generic;
 
-namespace ThumbHash.Benchmarks;
+namespace ThumbHashes.Benchmarks;
 
 [MemoryDiagnoser]
 [HardwareCounters(HardwareCounter.BranchInstructions, HardwareCounter.BranchMispredictions)]
@@ -30,9 +30,9 @@ public class ThumbHashToRgbaBenchmarks
 
     [Benchmark]
     [ArgumentsSource(nameof(ThumbHashes_NoAlpha))]
-    public (int,int) ThumbHashToRgba_NoAlpha(byte[] thumbhash) => ThumbHash.ThumbHashToRgba(thumbhash, stackalloc byte[32 * 32 * 4]);
+    public (int,int) ThumbHashToRgba_NoAlpha(byte[] thumbhash) => Utilities.ThumbHashToRgba(thumbhash, stackalloc byte[32 * 32 * 4]);
 
     [Benchmark]
     [ArgumentsSource(nameof(ThumbHashes_Alpha))]
-    public (int, int) ThumbHashToRgba_Alpha(byte[] thumbhash) => ThumbHash.ThumbHashToRgba(thumbhash, stackalloc byte[32 * 32 * 4]);
+    public (int, int) ThumbHashToRgba_Alpha(byte[] thumbhash) => Utilities.ThumbHashToRgba(thumbhash, stackalloc byte[32 * 32 * 4]);
 }

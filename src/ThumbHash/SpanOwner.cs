@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace ThumbHash;
+namespace ThumbHashes;
 
 internal readonly ref struct SpanOwner<T>
 {
@@ -38,6 +38,7 @@ internal readonly ref struct SpanOwner<T>
     public SpanOwner(int length) : this(length, DefaultPool.Rent(length))
     {
     }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private SpanOwner(int length, T[] buffer)
     {
