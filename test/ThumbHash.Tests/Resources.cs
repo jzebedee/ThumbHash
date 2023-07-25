@@ -29,7 +29,7 @@ internal static class Resources
 
     internal const float FlowerAspectRatio = 0.714285731f;
 
-    internal static SKBitmap TuxBitmap => GetBitmap("Resources/tux.png", fixPremul: true);
+    internal static SKBitmap TuxBitmap => GetBitmap("Resources/tux.png");
 
     internal static byte[] TuxThumbHash => FromHexString("A1198A1C02383A25D727F68B971FF7F9717F80376758987906");
 
@@ -39,12 +39,9 @@ internal static class Resources
 
     internal const float TuxAspectRatio = 0.800000011f;
 
-    private static SKBitmap GetBitmap(string path, bool fixPremul = false)
+    private static SKBitmap GetBitmap(string path)
     {
-        using var skbmp = fixPremul
-            ? SKBitmap.Decode(path, SKBitmap.DecodeBounds(path).WithAlphaType(SKAlphaType.Unpremul))
-            : SKBitmap.Decode(path);
-        var result = skbmp.Copy(SKColorType.Rgba8888);
-        return result;
+        using var skbmp = SKBitmap.Decode(path);
+        return skbmp.Copy(SKColorType.Rgba8888);
     }
 }
