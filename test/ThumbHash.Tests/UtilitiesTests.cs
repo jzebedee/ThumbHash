@@ -1,8 +1,9 @@
 using SkiaSharp;
+using System.Buffers;
 
-namespace ThumbHash.Tests;
+namespace ThumbHashes.Tests;
 
-public class ThumbHashTests
+public class UtilitiesTests
 {
     private static SKBitmap FlowerBitmap => GetBitmap("Resources/flower.jpg");
 
@@ -74,29 +75,29 @@ public class ThumbHashTests
     public void RgbaToThumbHash(SKBitmap expected_img, byte[] expected_thumbhash)
     {
         using var img = expected_img;
-        var thumbhash = ThumbHash.RgbaToThumbHash(img.Width, img.Height, img.GetPixelSpan());
+        var thumbhash = Utilities.RgbaToThumbHash(img.Width, img.Height, img.GetPixelSpan());
         Assert.Equal(thumbhash, expected_thumbhash);
     }
 
     [Fact]
     public void RgbaToThumbHash_ThrowsOnBadDimensions()
     {
-        Assert.Throws<ArgumentOutOfRangeException>("w", () => ThumbHash.RgbaToThumbHash(101, 1, stackalloc byte[101 * 1 * 4]));
-        Assert.Throws<ArgumentOutOfRangeException>("h", () => ThumbHash.RgbaToThumbHash(1, 101, stackalloc byte[1 * 101 * 4]));
+        Assert.Throws<ArgumentOutOfRangeException>("w", () => Utilities.RgbaToThumbHash(101, 1, stackalloc byte[101 * 1 * 4]));
+        Assert.Throws<ArgumentOutOfRangeException>("h", () => Utilities.RgbaToThumbHash(1, 101, stackalloc byte[1 * 101 * 4]));
     }
 
     [Fact]
     public void RgbaToThumbHash_ThrowsOnBadPixelSize()
     {
-        Assert.Throws<ArgumentOutOfRangeException>("rgba_bytes.Length", () => ThumbHash.RgbaToThumbHash(1, 1, stackalloc byte[3]));
-        Assert.Throws<ArgumentOutOfRangeException>("rgba_bytes.Length", () => ThumbHash.RgbaToThumbHash(1, 1, stackalloc byte[5]));
+        Assert.Throws<ArgumentOutOfRangeException>("rgba_bytes.Length", () => Utilities.RgbaToThumbHash(1, 1, stackalloc byte[3]));
+        Assert.Throws<ArgumentOutOfRangeException>("rgba_bytes.Length", () => Utilities.RgbaToThumbHash(1, 1, stackalloc byte[5]));
     }
 
     [Theory]
     [MemberData(nameof(TestThumbHashes))]
     public void ThumbHashToRgba(byte[] thumbhash, SKBitmap thumbhash_rendered)
     {
-        var (w, h, hash_rgba) = ThumbHash.ThumbHashToRgba(thumbhash);
+        var (w, h, hash_rgba) = Utilities.ThumbHashToRgba(thumbhash);
 
         //some pixels are zeroed out in the png form so we round-trip this to make it match the expected png
         using var hash_img = SKImage.FromPixelCopy(new(w, h, SKColorType.Rgba8888, SKAlphaType.Unpremul), hash_rgba);
@@ -123,13 +124,13 @@ public class ThumbHashTests
     [Fact]
     public void ThumbHashToRgba_ThrowsOnBadHashSize()
     {
-        Assert.Throws<ArgumentOutOfRangeException>("hash.Length", () => ThumbHash.ThumbHashToRgba(stackalloc byte[4]));
+        Assert.Throws<ArgumentOutOfRangeException>("hash.Length", () => Utilities.ThumbHashToRgba(stackalloc byte[4]));
     }
 
     [Fact]
     public void ThumbHashToRgba_ThrowsOnBadRgbaSize()
     {
-        Assert.Throws<ArgumentOutOfRangeException>("rgba.Length", () => ThumbHash.ThumbHashToRgba(FlowerThumbHash, stackalloc byte[4]));
+        Assert.Throws<ArgumentOutOfRangeException>("rgba.Length", () => Utilities.ThumbHashToRgba(FlowerThumbHash, stackalloc byte[4]));
     }
 
     [Theory]
@@ -137,7 +138,7 @@ public class ThumbHashTests
     public void ThumbHashToAverageRgba(byte[] thumbhash, (float r, float g, float b, float a) averages)
     {
         var expected = averages;
-        var actual = ThumbHash.ThumbHashToAverageRgba(thumbhash);
+        var actual = Utilities.ThumbHashToAverageRgba(thumbhash);
 
         Assert.Equal(expected, actual);
     }
@@ -145,7 +146,7 @@ public class ThumbHashTests
     [Fact]
     public void ThumbHashToAverageRgba_ThrowsOnBadHashSize()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => ThumbHash.ThumbHashToAverageRgba(stackalloc byte[4]));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Utilities.ThumbHashToAverageRgba(stackalloc byte[4]));
     }
 
     [Theory]
@@ -153,7 +154,7 @@ public class ThumbHashTests
     public void ThumbHashToApproximateAspectRatio(byte[] thumbhash, float aspectRatio)
     {
         var expected = aspectRatio;
-        var actual = ThumbHash.ThumbHashToApproximateAspectRatio(thumbhash);
+        var actual = Utilities.ThumbHashToApproximateAspectRatio(thumbhash);
 
         Assert.Equal(expected, actual);
     }
@@ -161,6 +162,6 @@ public class ThumbHashTests
     [Fact]
     public void ThumbHashToApproximateAspectRatio_ThrowsOnBadHashSize()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => ThumbHash.ThumbHashToApproximateAspectRatio(stackalloc byte[4]));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Utilities.ThumbHashToApproximateAspectRatio(stackalloc byte[4]));
     }
 }
