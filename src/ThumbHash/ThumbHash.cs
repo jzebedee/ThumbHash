@@ -22,12 +22,6 @@ public readonly record struct ThumbHash(ReadOnlyMemory<byte> Hash)
     public (int width, int height, byte[] rgba) ToImage() => ThumbHashToRgba(Hash.Span);
 
     /// <summary>
-    /// Decodes a ThumbHash to an RGBA image.
-    /// </summary>
-    /// <returns>Width, height, and unpremultiplied RGBA8 pixels of the rendered ThumbHash.</returns>
-    public (int width, int height) ToImage(Span<byte> rgba) => ThumbHashToRgba(Hash.Span, rgba);
-
-    /// <summary>
     /// Encodes an RGBA image to a ThumbHash.
     /// </summary>
     /// <param name="width">The width of the input image. Must be ≤100px.</param>

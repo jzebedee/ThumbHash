@@ -30,10 +30,6 @@ public class ThumbHashTests
             Assert.Equal(rendered.Width, w);
             Assert.Equal(rendered.Height, h);
 
-            var spanBytes = new byte[w * h * 4];
-            _ = th.ToImage(spanBytes);
-            Assert.Equal(thRenderedBytes, spanBytes);
-
             {
                 using var hash_img = SKImage.FromPixelCopy(new(w, h, SKColorType.Rgba8888, SKAlphaType.Unpremul), thRenderedBytes);
                 using var hash_data_png = hash_img.Encode(SKEncodedImageFormat.Png, 100);
