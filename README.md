@@ -52,7 +52,7 @@ using var sk_img = SKImage.FromPixelCopy(image_info, rgba);
 using var sk_png_data = sk_img.Encode(SKEncodedImageFormat.Png, 100);
 
 using var fs_png = System.IO.File.Create("test.png");
-sk_png_data.SaveTo(fs);
+sk_png_data.SaveTo(fs_png);
 ```
 
 ## Support
