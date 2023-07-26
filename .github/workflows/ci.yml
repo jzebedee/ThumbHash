@@ -19,8 +19,11 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore --configuration Release
-    - name: Test
-      run: dotnet test --no-restore --no-build --configuration Release --logger trx --results-directory "TestResults"
+    - name: Test (net6.0)
+      run: dotnet test --no-restore --no-build --configuration Release --framework net6.0 --logger trx --results-directory "TestResults"
+    - name: Test (net481)
+      run: dotnet test --no-restore --no-build --configuration Release --framework net481 --logger trx --results-directory "TestResults"
+      if: matrix.os == 'windows-latest'
     - name: Upload test results
       uses: actions/upload-artifact@v2
       with:
