@@ -5,6 +5,15 @@ using static Resources;
 
 public class UtilitiesTests
 {
+    public static IEnumerable<object[]> TestDataUrls
+    {
+        get
+        {
+            yield return new object[] { FlowerThumbHashRendered, FlowerThumbHashRenderedDataUrl };
+            yield return new object[] { TuxThumbHashRendered, TuxThumbHashRenderedDataUrl };
+        }
+    }
+
     public static IEnumerable<object[]> TestImages
     {
         get
@@ -39,6 +48,15 @@ public class UtilitiesTests
             yield return new object[] { FlowerThumbHash, FlowerAspectRatio };
             yield return new object[] { TuxThumbHash, TuxAspectRatio };
         }
+    }
+
+    [Theory]
+    [MemberData(nameof(TestDataUrls))]
+    public void RgbaToDataUrl(SKBitmap expected_img, string expectedDataUrl)
+    {
+        using var img = expected_img;
+        var dataUrl = Utilities.RgbaToDataUrl(img.Width, img.Height, img.GetPixelSpan());
+        Assert.Equal(expectedDataUrl, dataUrl);
     }
 
     [Theory]
@@ -77,7 +95,7 @@ public class UtilitiesTests
 
         //
         using var expected_hash_bmp = thumbhash_rendered;
- 
+
         //if(expected_hash_img.AlphaType is SKAlphaType.Unpremul)
         //{
         //    var th_rend_rgba = File.ReadAllBytes(@"examples\rust\tux_thumbhash.rgba");
