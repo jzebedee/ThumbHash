@@ -46,6 +46,9 @@ internal static class Resources
     private static SKBitmap GetBitmap(string path)
     {
         using var skbmp = SKBitmap.Decode(path);
-        return skbmp.Copy(SKColorType.Rgba8888);
+
+        var result = skbmp.Copy(SKColorType.Rgba8888);
+        result.SetImmutable();
+        return result;
     }
 }
