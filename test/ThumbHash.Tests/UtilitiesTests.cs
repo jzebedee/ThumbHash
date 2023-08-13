@@ -93,20 +93,7 @@ public class UtilitiesTests
         using var hash_data_png = hash_img.Encode(SKEncodedImageFormat.Png, 100);
         using var hash_bmp = SKBitmap.Decode(hash_data_png);
 
-        //
         using var expected_hash_bmp = thumbhash_rendered;
-
-        //if(expected_hash_img.AlphaType is SKAlphaType.Unpremul)
-        //{
-        //    var th_rend_rgba = File.ReadAllBytes(@"examples\rust\tux_thumbhash.rgba");
-        //    hash_rgba.SequenceEqual(th_rend_rgba);
-        //}
-
-        //{
-        //    using var fs = File.Create("hash.png");
-        //    hash_data_png.SaveTo(fs);
-        //}
-
         Assert.Equal(expected_hash_bmp.Pixels, hash_bmp.Pixels);
     }
 
