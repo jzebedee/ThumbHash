@@ -1,4 +1,6 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Buffers;
+using System.Buffers.Text;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -560,5 +562,122 @@ public static class Utilities
         var lx = is_landscape ? l_max : l_min;
         var ly = is_landscape ? l_min : l_max;
         return (float)lx / ly;
+    }
+
+    private static class Tables
+    {
+        public static ReadOnlySpan<int> DataUrlTable
+            => new[] {
+                0, 498536548, 997073096, 651767980, 1994146192, 1802195444, 1303535960,
+                1342533948, -306674912, -267414716, -690576408, -882789492, -1687895376,
+                -2032938284, -1609899400, -1111625188
+            };
+    }
+
+    public static bool TryConvertRgbaToDataUrl(int width, int height, ReadOnlySpan<byte> rgba, Span<byte> dataUrl, out int bytesWritten)
+    {
+        bytesWritten = 0;
+
+        var dataUrlPrefix = "data:image/png;base64,"u8;
+        var original = dataUrl;
+
+        {
+            if(!dataUrlPrefix.TryCopyTo(dataUrl))
+            {
+                return false;
+            }
+            dataUrl = dataUrl[dataUrlPrefix.Length..];
+        }
+
+        var row = width * 4 + 1;
+        var idat = 6 + height * (5 + row);
+
+        {
+            Span<byte> header = stackalloc byte[43]
+            {
+                137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0,
+                (byte)(width >> 8), (byte)(width & 255), 0, 0, (byte)(height >> 8), (byte)(height & 255), 8, 6, 0, 0, 0, 0, 0, 0, 0,
+                (byte)(idat >>> 24), (byte)((idat >> 16) & 255), (byte)((idat >> 8) & 255), (byte)(idat & 255),
+                73, 68, 65, 84, 120, 1
+            };
+
+            if (!header.TryCopyTo(dataUrl))
+            {
+                return false;
+            }
+            dataUrl = dataUrl[43..];
+        }
+
+        var a = 1;
+        var b = 0;
+        for (int y = 0, i = 0, end = row - 1; y < height; y++, end += row - 1)
+        {
+            var len = (end - i) + 6;
+            using var bytesOwner = new SpanOwner<byte>(len);
+            var bytes = bytesOwner.Span;
+
+            bytes[0] = (byte)(y + 1 < height ? 0 : 1);
+            bytes[1] = (byte)(row & 255);
+            bytes[2] = (byte)(row >> 8);
+            bytes[3] = (byte)(~row & 255);
+            bytes[4] = (byte)((row >> 8) ^ 255);
+            bytes[5] = 0;
+
+            int j = 6;
+            for (b = (b + a) % 65521; i < end; i++, j++)
+            {
+                var u = bytes[j] = (byte)(rgba[i] & 255);
+                a = (a + u) % 65521;
+                b = (b + a) % 65521;
+            }
+
+            if(!bytes.TryCopyTo(dataUrl))
+            {
+                return false;
+            }
+            dataUrl = dataUrl[bytes.Length..];
+        }
+
+        {
+            Span<byte> span = stackalloc byte[20]
+            {
+                (byte)(b >> 8), (byte)(b & 255), (byte)(a >> 8), (byte)(a & 255), 0, 0, 0, 0,
+                0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130
+            };
+
+            if(!span.TryCopyTo(dataUrl))
+            {
+                return false;
+            }
+            dataUrl = dataUrl[20..];
+        }
+
+        var ob = original[..^dataUrl.Length][dataUrlPrefix.Length..];
+
+        var table = Tables.DataUrlTable;
+        foreach (var (start, end) in stackalloc[] { (12, 29), (37, 41 + idat) })
+        {
+            var c = ~0;
+            for (var i = start; i < end; i++)
+            {
+                c ^= ob[i];
+                c = (c >>> 4) ^ table[c & 15];
+                c = (c >>> 4) ^ table[c & 15];
+            }
+            c = ~c;
+            ob[end] = (byte)(c >>> 24);
+            ob[end + 1] = (byte)((c >> 16) & 255);
+            ob[end + 2] = (byte)((c >> 8) & 255);
+            ob[end + 3] = (byte)(c & 255);
+        }
+
+        if(Base64.EncodeToUtf8InPlace(original[dataUrlPrefix.Length..], ob.Length, out bytesWritten) 
+            is not OperationStatus.Done)
+        {
+            return false;
+        }
+
+        bytesWritten += dataUrlPrefix.Length;
+        return true;
     }
 }
