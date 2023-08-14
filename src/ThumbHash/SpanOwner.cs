@@ -36,6 +36,9 @@ internal readonly ref struct SpanOwner<T>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ArraySegment<T> DangerousGetArraySegment() => new(_buffer, 0, _length);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public SpanOwner<T> WithLength(int length) => new(length, _buffer);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
