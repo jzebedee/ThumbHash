@@ -1,5 +1,7 @@
 ﻿namespace ThumbHashes;
 
+using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using static Utilities;
 
 public readonly record struct ThumbHash(ReadOnlyMemory<byte> Hash)
@@ -20,6 +22,30 @@ public readonly record struct ThumbHash(ReadOnlyMemory<byte> Hash)
     /// </summary>
     /// <returns>Width, height, and unpremultiplied RGBA8 pixels of the rendered ThumbHash.</returns>
     public (int width, int height, byte[] rgba) ToImage() => ThumbHashToRgba(Hash.Span);
+
+    public string ToDataUrl()
+    {
+        var (w, h, rgba) = ToImage();
+
+        using var dataUrlOwner = new SpanOwner<byte>(0x4000);
+        var dataUrlSpan = dataUrlOwner.Span;
+
+        if (!TryConvertRgbaToDataUrl(w, h, rgba, dataUrlSpan, out int bytesWritten))
+        {
+            ThrowHelper_NotEnoughSpace();
+        }
+
+#if NET6_0_OR_GREATER
+        return Encoding.UTF8.GetString(dataUrlSpan[..bytesWritten]);
+#else
+        return Encoding.UTF8.GetString(dataUrlOwner.DangerousGetArraySegment().Array, 0, bytesWritten);
+#endif
+
+        //we should never hit this with the maximum ThumbHash render (png overhead + 32*32*4 + base64 overhead)
+
+        [DoesNotReturn]
+        static void ThrowHelper_NotEnoughSpace() => throw new InvalidOperationException("Not enough space to allocate data url");
+    }
 
     /// <summary>
     /// Encodes an RGBA image to a ThumbHash.
