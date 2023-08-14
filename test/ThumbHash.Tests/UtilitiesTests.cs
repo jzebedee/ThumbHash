@@ -1,4 +1,5 @@
 using SkiaSharp;
+using System.Text;
 
 namespace ThumbHashes.Tests;
 using static Resources;
@@ -9,8 +10,8 @@ public class UtilitiesTests
     {
         get
         {
-            yield return new object[] { FlowerThumbHashRendered, FlowerThumbHashRenderedDataUrl };
-            yield return new object[] { TuxThumbHashRendered, TuxThumbHashRenderedDataUrl };
+            yield return new object[] { FlowerThumbHash, FlowerThumbHashRenderedDataUrl };
+            yield return new object[] { TuxThumbHash, TuxThumbHashRenderedDataUrl };
         }
     }
 
@@ -52,11 +53,16 @@ public class UtilitiesTests
 
     [Theory]
     [MemberData(nameof(TestDataUrls))]
-    public void RgbaToDataUrl(SKBitmap expected_img, string expectedDataUrl)
+    public void RgbaToDataUrl(byte[] thumbhashBytes, string expectedDataUrl)
     {
-        using var img = expected_img;
-        var dataUrl = Utilities.RgbaToDataUrl(img.Width, img.Height, img.GetPixelSpan());
-        Assert.Equal(expectedDataUrl, dataUrl);
+        var thumbhash = new ThumbHash(thumbhashBytes);
+        var (w, h, rgba) = thumbhash.ToImage();
+        var buffer = new byte[w * h * 12];
+        var result = Utilities.TryConvertRgbaToDataUrl(w, h, rgba, buffer, out int bytesWritten);
+        Assert.True(result);
+
+        var actualDataUrl = Encoding.UTF8.GetString(buffer, 0, bytesWritten);
+        Assert.Equal(expectedDataUrl, actualDataUrl);
     }
 
     [Theory]
