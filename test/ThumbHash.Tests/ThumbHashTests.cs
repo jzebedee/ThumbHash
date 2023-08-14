@@ -9,14 +9,14 @@ public class ThumbHashTests
     {
         get
         {
-            yield return new object[] { FlowerThumbHash, FlowerThumbHashRendered, FlowerBitmap, FlowerAspectRatio, FlowerThumbHashAverages };
-            yield return new object[] { TuxThumbHash, TuxThumbHashRendered, TuxBitmap, TuxAspectRatio, TuxThumbHashAverages };
+            yield return new object[] { FlowerThumbHash, FlowerThumbHashRendered, FlowerBitmap, FlowerAspectRatio, FlowerThumbHashAverages, FlowerThumbHashRenderedDataUrl };
+            yield return new object[] { TuxThumbHash, TuxThumbHashRendered, TuxBitmap, TuxAspectRatio, TuxThumbHashAverages, TuxThumbHashRenderedDataUrl };
         }
     }
 
     [Theory]
     [MemberData(nameof(TestThumbHashes))]
-    public void ValidateThumbHash(byte[] hash, SKBitmap rendered, SKBitmap original, float aspectRatio, (float r, float g, float b, float a) averages)
+    public void ValidateThumbHash(byte[] hash, SKBitmap rendered, SKBitmap original, float aspectRatio, (float r, float g, float b, float a) averages, string dataUrl)
     {
         using (rendered)
         using (original)
@@ -47,6 +47,8 @@ public class ThumbHashTests
                 // https://learn.microsoft.com/en-us/dotnet/api/system.readonlyspan-1.op_equality?view=net-7.0#remarks
                 Assert.True(th.Hash.Span.SequenceEqual(thRecreated.Hash.Span));
             }
+
+            Assert.Equal(dataUrl, th.ToDataUrl());
         }
     }
 }
