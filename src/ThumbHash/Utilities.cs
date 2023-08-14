@@ -665,10 +665,7 @@ public static class Utilities
                 c = (c >>> 4) ^ table[c & 15];
             }
             c = ~c;
-            ob[end] = (byte)(c >>> 24);
-            ob[end + 1] = (byte)((c >> 16) & 255);
-            ob[end + 2] = (byte)((c >> 8) & 255);
-            ob[end + 3] = (byte)(c & 255);
+            BinaryPrimitives.WriteInt32BigEndian(ob[end..], c);
         }
 
         if(Base64.EncodeToUtf8InPlace(original[dataUrlPrefix.Length..], ob.Length, out bytesWritten) 
