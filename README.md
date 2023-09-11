@@ -57,6 +57,15 @@ using var fs_png = System.IO.File.Create("test.png");
 sk_png_data.SaveTo(fs_png);
 ```
 
+### Save a ThumbHash to a PNG data url (no dependencies)
+```csharp
+string dataUrl = thumbhash.ToDataUrl();
+```
+
+```html
+<img src="@dataUrl" />
+```
+
 ## Support
 
 [![Discord](https://img.shields.io/discord/359127425558249482)](https://discord.gg/FkRPyz6kcD)
