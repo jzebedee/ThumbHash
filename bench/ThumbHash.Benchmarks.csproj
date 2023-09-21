@@ -12,9 +12,9 @@
   </PropertyGroup>
 	
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.5" />
-    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.5" />
-    <PackageReference Include="SkiaSharp" Version="2.88.3" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.8" />
+    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.8" />
+    <PackageReference Include="SkiaSharp" Version="2.88.6" />
   </ItemGroup>
 	
   <ItemGroup>
