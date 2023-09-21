@@ -5,7 +5,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
 	<LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <IsTrimmable>true</IsTrimmable>
     <RootNamespace>ThumbHashes</RootNamespace>
 
 	<Product>ThumbHash</Product>
@@ -22,6 +21,13 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+	
+  <!-- Trimming support -->
+  <!-- see:  Breaking change: IsTrimmable for netstandard libs #36775 -->
+  <!-- https://github.com/dotnet/docs/pull/36775 -->
+  <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net6.0'))">
+    <IsTrimmable>true</IsTrimmable>
   </PropertyGroup>
 	
   <!-- Source Link Support -->
